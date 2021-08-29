@@ -14,4 +14,5 @@ Add-ADGroupMember -Identity "Domain Admins" -Members "ajf-da"
 Add-ADGroupMember -Identity "Enterprise Admins" -Members "ajf-da"
 Add-ADGroupMember -Identity "Schema Admins" -Members "ajf-da"
 
-Add-ADGroupMember -Identity "OUAdmin_LAB" -Members "ajf-sa"
+Add-ADGroupMember -Identity "OUAdmin_LAB" -Members (Get-ADUser -Identity "ajf-sa")
+Add-ADGroupMember -Identity "CM_Admins" -Members (Get-ADUser -Identity "ajf-sa")
