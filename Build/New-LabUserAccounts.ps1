@@ -13,3 +13,5 @@ New-ADUser -Name "ajf" -SamAccountName "ajf" -GivenName "Anthony" -Initials "J" 
 Add-ADGroupMember -Identity "Domain Admins" -Members "ajf-da"
 Add-ADGroupMember -Identity "Enterprise Admins" -Members "ajf-da"
 Add-ADGroupMember -Identity "Schema Admins" -Members "ajf-da"
+
+Add-ADGroupMember -Identity "OUAdmin_LAB" -Members "ajf-sa"
