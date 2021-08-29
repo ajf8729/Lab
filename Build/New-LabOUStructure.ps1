@@ -17,6 +17,8 @@ foreach ($OU in $OUs) {
     New-ADOrganizationalUnit -Name $OU -Path "OU=LAB,DC=lab,DC=ajf8729,DC=com" -Description "LAB $OU"
 }
 
+New-ADOrganizationalUnit -Name "CM" -Path "OU=Servers,OU=LAB,DC=lab,DC=ajf8729,DC=com" -Description "ConfigMgr"
+
 New-ADGroup -Name "OUAdmin_LAB" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,OU=LAB,DC=lab,DC=ajf8729,DC=com"
 
 $OU = "AD:\OU=LAB,DC=lab,DC=ajf8729,DC=com"
