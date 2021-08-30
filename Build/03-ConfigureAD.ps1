@@ -1,4 +1,5 @@
 Import-Module -Name ActiveDirectory
+Import-Module -Name DnsServer
 
 # Variables
 
@@ -6,6 +7,10 @@ $DAPassword = Read-Host -Prompt "Enter domain admin account password" -AsSecureS
 $SAPassword = Read-Host -Prompt "Enter server admin account password" -AsSecureString
 $WAPassword = Read-Host -Prompt "Enter workstation admin account password" -AsSecureString
 $Password = Read-Host -Prompt "Enter user account password" -AsSecureString
+
+# Create DNS reverse lookup zone
+
+Add-DnsServerPrimaryZone -NetworkID "172.20.1.0/24" -ReplicationScope Domain
 
 # Create root OUs
 
