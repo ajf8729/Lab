@@ -140,6 +140,7 @@ New-ADGroup -Name "CM_SQL_Admins" -GroupCategory Security -GroupScope DomainLoca
 
 Add-ADGroupMember -Identity "CM_Servers" -Members (Get-ADComputer -Identity "LABCM01")
 Add-ADGroupMember -Identity "CM_Admins" -Members (Get-ADGroup -Identity "CM_Servers")
+Add-ADGroupMember -Identity "CM_Admins" -Members (Get-ADGroup -Identity "RBAC_InfrastructureAdmins")
 Add-ADGroupMember -Identity "CM_SQL_Admins" -Members (Get-ADGroup -Identity "CM_Admins")
 
 New-ADServiceAccount -Name "svc_CM_SQL" -SamAccountName "svc_CM_SQL" -DNSHostName "labcm01.lab.ajf8729.com" -KerberosEncryptionType AES128,AES256 -Path "OU=CM,OU=Servers,OU=LAB,DC=lab,DC=ajf8729,DC=com" -PrincipalsAllowedToRetrieveManagedPassword (Get-ADGroup -Identity "CM_Servers")
