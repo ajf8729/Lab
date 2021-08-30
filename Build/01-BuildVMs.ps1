@@ -18,7 +18,7 @@ Set-VMFirmware -VMName "LABCM01" -BootOrder (Get-VMDvdDrive -VMName "LABCM01"),(
 Add-VMScsiController -VMName "LABCM01"
 New-VHD -Path "C:\Users\Public\Documents\Hyper-V\Virtual hard disks\LABCM01-2.vhdx" -SizeBytes 107374182400 -Dynamic | Out-Null
 New-VHD -Path "C:\Users\Public\Documents\Hyper-V\Virtual hard disks\LABCM01-3.vhdx" -SizeBytes 107374182400 -Dynamic | Out-Null
-Add-VMHardDiskDrive -VMName LABCM01 -ControllerType SCSI -ControllerNumber 1 -ControllerLocation 0
-Add-VMHardDiskDrive -VMName LABCM01 -ControllerType SCSI -ControllerNumber 1 -ControllerLocation 1
+Add-VMHardDiskDrive -VMName "LABCM01" -ControllerType SCSI -ControllerNumber 1 -ControllerLocation 0
+Add-VMHardDiskDrive -VMName "LABCM01" -ControllerType SCSI -ControllerNumber 1 -ControllerLocation 1
 Set-VMHardDiskDrive -VMName "LABCM01" -ControllerType SCSI -ControllerNumber 1 -ControllerLocation 0 -Path 'C:\Users\Public\Documents\Hyper-V\Virtual hard disks\LABCM01-2.vhdx'
 Set-VMHardDiskDrive -VMName "LABCM01" -ControllerType SCSI -ControllerNumber 1 -ControllerLocation 1 -Path 'C:\Users\Public\Documents\Hyper-V\Virtual hard disks\LABCM01-3.vhdx'
