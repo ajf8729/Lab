@@ -109,19 +109,19 @@ Add-ADGroupMember -Identity "RBAC_WorkstationAdmins" -Members (Get-ADUser -Ident
 
 # Create KDS root key
 
-#Add-KdsRootKey -EffectiveTime ((Get-Date).AddHours((-10)))
+Add-KdsRootKey -EffectiveTime ((Get-Date).AddHours((-10)))
 
 # Rename default AD site
 
-#Get-ADObject -SearchBase (Get-ADRootDSE).ConfigurationNamingContext -Filter "objectClass -eq 'site' -and name -eq 'Default-First-Site-Name'" | Rename-ADObject -NewName "LAB"
+Get-ADObject -SearchBase (Get-ADRootDSE).ConfigurationNamingContext -Filter "objectClass -eq 'site' -and name -eq 'Default-First-Site-Name'" | Rename-ADObject -NewName "LAB"
 
 # Create AD subnet
 
-#New-ADReplicationSubnet -Name "172.20.1.0/24" -Site "LAB"
+New-ADReplicationSubnet -Name "172.20.1.0/24" -Site "LAB"
 
 # Enable AD recycling bin
 
-#Enable-ADOptionalFeature -Identity "Recycle Bin Feature" -Scope ForestOrConfigurationSet -Target "lab.ajf8729.com" -Confirm:$false
+Enable-ADOptionalFeature -Identity "Recycle Bin Feature" -Scope ForestOrConfigurationSet -Target "lab.ajf8729.com" -Confirm:$false
 
 # Redirect default Computers and Users containers
 
