@@ -55,15 +55,28 @@ foreach ($OUName in $OUNames) {
 $FolderPath = "LAB:\UserCollection\lab.ajf8729.com"
 
 $OUNames = (
+    "T0"
+)
+
+foreach ($OUName in $OUNames) {
+    $OU = Get-ADOrganizationalUnit -Identity "OU=$OUName,$DomainDN" -Properties CanonicalName,DistinguishedName,Name,Description | Select-Object -Property CanonicalName,DistinguishedName,Name,Description | Sort-Object -Property CanonicalName
+    if (-not (Get-CMCollection -Name "$($OU.CanonicalName) (Users)")) {
+        $Collection = New-CMCollection -CollectionType User -LimitingCollectionName "All Users" -Name "$($OU.CanonicalName) (Users)" -RefreshSchedule $RefreshSchedule -Comment $OU.DistinguishedName
+        Add-CMUserCollectionQueryMembershipRule -CollectionName "$($OU.CanonicalName) (Users)" -QueryExpression "select * from SMS_R_User where SMS_R_User.UserOUName = '$($OU.CanonicalName)'" -RuleName $OU.CanonicalName
+        Move-CMObject -FolderPath $FolderPath -ObjectId $Collection.CollectionID
+    }
+}
+
+$OUNames = (
     "Administrators",
     "Users"
 )
 
 foreach ($OUName in $OUNames) {
     $OU = Get-ADOrganizationalUnit -Identity "OU=$OUName,OU=LAB,$DomainDN" -Properties CanonicalName,DistinguishedName,Name,Description | Select-Object -Property CanonicalName,DistinguishedName,Name,Description | Sort-Object -Property CanonicalName
-    if (-not (Get-CMCollection -Name $OU.CanonicalName)) {
-        $Collection = New-CMCollection -CollectionType User -LimitingCollectionName "All Users" -Name $OU.CanonicalName -RefreshSchedule $RefreshSchedule -Comment $OU.DistinguishedName
-        Add-CMUserCollectionQueryMembershipRule -CollectionName $OU.CanonicalName -QueryExpression "select * from SMS_R_User where SMS_R_User.UserOUName = '$($OU.CanonicalName)'" -RuleName $OU.CanonicalName
+    if (-not (Get-CMCollection -Name "$($OU.CanonicalName) (Users)")) {
+        $Collection = New-CMCollection -CollectionType User -LimitingCollectionName "All Users" -Name "$($OU.CanonicalName) (Users)" -RefreshSchedule $RefreshSchedule -Comment $OU.DistinguishedName
+        Add-CMUserCollectionQueryMembershipRule -CollectionName "$($OU.CanonicalName) (Users)" -QueryExpression "select * from SMS_R_User where SMS_R_User.UserOUName = '$($OU.CanonicalName)'" -RuleName $OU.CanonicalName
         Move-CMObject -FolderPath $FolderPath -ObjectId $Collection.CollectionID
     }
 }
