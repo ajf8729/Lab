@@ -28,3 +28,17 @@ Add-CMBoundaryToGroup -BoundaryName "lab.ajf8729.com/LAB" -BoundaryGroupName "LA
 # Configure default boundary group
 
 Invoke-CimMethod -InputObject (Get-CimInstance -Namespace "root\sms\site_LAB" -ClassName SMS_DefaultBoundaryGroup) -MethodName AddSiteSystem -Arguments @{ServerNALPath = [string[]]'["Display=\\LABCM01.lab.ajf8729.com\"]MSWNET:["SMS_SITE=LAB"]\\LABCM01.lab.ajf8729.com\'; Flags=([System.UInt32[]]0)}
+
+# Site properties
+
+Set-CMSite -SiteCode "LAB" -UseEncryption $true
+
+# Hierarchy settings
+
+Set-CMHierarchySetting -EnablePrereleaseFeature -Force
+Set-CMHierarchySetting -EnableAutoClientUpgrade $true -AutomaticallyUpgradeDays 1 -Force
+
+# DP Group
+
+New-CMDistributionPointGroup -Name "ALL" | Out-Null
+Add-CMDistributionPointToGroup -DistributionPointGroupName "ALL" -DistributionPointName "labcm01.lab.ajf8729.com"
