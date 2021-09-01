@@ -28,12 +28,10 @@ Set-CMSoftwareUpdatePointComponent -Schedule (New-CMSchedule -RecurCount 1 -Recu
 
 Sync-CMSoftwareUpdate -FullSync $true
 
-#Add Updates classification
+#Add classifications and products
 
 Set-CMSoftwareUpdatePointComponent -AddUpdateClassification Updates
-
-# Start full synchronization
-
+Set-CMSoftwareUpdatePointComponent -AddProduct "Microsoft Server operating system-21H2"
 Sync-CMSoftwareUpdate -FullSync $true
 
 # Enable software-update based client installation
