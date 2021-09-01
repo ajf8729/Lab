@@ -28,6 +28,10 @@ Set-CMSoftwareUpdatePointComponent -Schedule (New-CMSchedule -RecurCount 1 -Recu
 
 Sync-CMSoftwareUpdate -FullSync $true
 
+# Enable third party updates
+
+Set-CMSoftwareUpdatePointComponent -EnableThirdPartyUpdates $true -EnableManualCertManagement $false
+
 #Add classifications and products
 
 Set-CMSoftwareUpdatePointComponent -AddUpdateClassification "Security Updates"
