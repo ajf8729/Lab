@@ -30,6 +30,7 @@ Sync-CMSoftwareUpdate -FullSync $true
 
 #Add classifications and products
 
+Set-CMSoftwareUpdatePointComponent -AddUpdateClassification "Security Updates"
 Set-CMSoftwareUpdatePointComponent -AddUpdateClassification Updates
 Set-CMSoftwareUpdatePointComponent -AddProduct "Microsoft Server operating system-21H2"
 Sync-CMSoftwareUpdate -FullSync $true
