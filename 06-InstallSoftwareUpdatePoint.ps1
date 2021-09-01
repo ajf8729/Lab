@@ -20,10 +20,6 @@ foreach ($Prop in $Props) {
 $WSUS.Props = $Props
 $WSUS.Put() | Out-Null
 
-# Enable software-update based client installation
-
-Set-CMSoftwareUpdateBasedClientInstallation -EnableWsus $true
-
 # Enable synchronization and set schedule
 
 Set-CMSoftwareUpdatePointComponent -Schedule (New-CMSchedule -RecurCount 1 -RecurInterval Days -Start 2021-08-01T15:00:00-04:00)
@@ -31,3 +27,15 @@ Set-CMSoftwareUpdatePointComponent -Schedule (New-CMSchedule -RecurCount 1 -Recu
 # Start full synchronization
 
 Sync-CMSoftwareUpdate -FullSync $true
+
+#Add Updates classification
+
+Set-CMSoftwareUpdatePointComponent -AddUpdateClassification Updates
+
+# Start full synchronization
+
+Sync-CMSoftwareUpdate -FullSync $true
+
+# Enable software-update based client installation
+
+Set-CMSoftwareUpdateBasedClientInstallation -EnableWsus $true
