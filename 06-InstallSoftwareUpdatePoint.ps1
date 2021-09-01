@@ -2,7 +2,7 @@ Import-Module -FullyQualifiedName "$env:SMS_ADMIN_UI_PATH\..\..\bin\Configuratio
 
 Set-Location -Path "LAB:"
 
-Add-CMSoftwareUpdatePoint -SiteSystemServerName "labcm01.lab.ajf8729.com" -ClientConnectionType Intranet -WsusSsl $false -WsusIisPort 8530
+Add-CMSoftwareUpdatePoint -SiteSystemServerName "labcm01.lab.ajf8729.com" -ClientConnectionType Intranet -WsusSsl $false -WsusIisPort 8530 -WsusIisSslPort 8531
 
 # Configure WSUS Maintenance options
 
@@ -19,3 +19,15 @@ foreach ($Prop in $Props) {
 }
 $WSUS.Props = $Props
 $WSUS.Put() | Out-Null
+
+# Enable software-update based client installation
+
+Set-CMSoftwareUpdateBasedClientInstallation -EnableWsus $true
+
+# Enable synchronization and set schedule
+
+Set-CMSoftwareUpdatePointComponent -Schedule (New-CMSchedule -RecurCount 1 -RecurInterval Days -Start 2021-08-01T15:00:00-04:00)
+
+# Start full synchronization
+
+Sync-CMSoftwareUpdate -FullSync $true
