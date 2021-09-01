@@ -229,3 +229,8 @@ New-GPLink -Name "Workstation - Default Security Policy" -Target "OU=Staging,OU=
 New-GPLink -Name "Workstation - Default Security Policy" -Target "OU=Workstations,OU=LAB,DC=lab,DC=ajf8729,DC=com" -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
 
 New-GPLink -Name "User - Default Security Policy" -Target "OU=Users,OU=LAB,DC=lab,DC=ajf8729,DC=com" -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
+
+# Create central store
+
+New-Item -Path "C:\Windows\SYSVOL\domain\Policies" -Name PolicyDefinitions -ItemType Directory | Out-Null
+Copy-Item -Path "C:\Windows\PolicyDefinitions\*" -Destination "C:\Windows\SYSVOL\domain\Policies\PolicyDefinitions\" -Recurse
