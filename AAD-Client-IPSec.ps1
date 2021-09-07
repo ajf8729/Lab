@@ -35,3 +35,7 @@ New-NetIPsecRule -Name "Domain Controllers" -DisplayName "Domain Controllers" -I
 # Create "ADCM01" IPSec Rule
 
 New-NetIPsecRule -Name "ADCM01" -DisplayName "ADCM01" -InboundSecurity Request -OutboundSecurity Request -Phase1AuthSet "{E5A5D32A-4BCE-4e4d-B07F-4AB1BA7E5FE3}" -Phase2AuthSet "{E5A5D32A-4BCE-4e4d-B07F-4AB1BA7E5FE4}" -RemoteAddress 172.20.1.16 -Protocol TCP -RemotePort 445 | Out-Null
+
+#Create "CORE" IPSec Rule
+
+New-NetIPsecRule -Name "CORE" -DisplayName "CORE" -InboundSecurity Require -OutboundSecurity Require -Phase1AuthSet "{E5A5D32A-4BCE-4e4d-B07F-4AB1BA7E5FE3}" -Phase2AuthSet "{E5A5D32A-4BCE-4e4d-B07F-4AB1BA7E5FE4}" -RemoteAddress 172.20.1.20 -Protocol TCP -RemotePort 8080 | Out-Null
