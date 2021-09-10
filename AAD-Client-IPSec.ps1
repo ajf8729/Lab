@@ -16,26 +16,19 @@ New-NetIPsecQuickModeCryptoSet -DisplayName "Default Quick Mode Crypto Set" -Pro
 $Proposal = New-NetIPsecAuthProposal -Machine -Cert -Authority "DC=com, DC=ajf8729, DC=ad, CN=AJF8729 Root Certificate Authority" -AuthorityType Root
 New-NetIPsecPhase1AuthSet -DisplayName "Default IPSec Phase 1 Auth Set" -Proposal $Proposal -Default | Out-Null
 
-# Configure Default Phase 2 Auth Set
-# {E5A5D32A-4BCE-4e4d-B07F-4AB1BA7E5FE4}
+# Configure User Kerberos Phase 2 Auth Set
 
 $Proposal = New-NetIPsecAuthProposal -User -Kerberos
-New-NetIPsecPhase2AuthSet -DisplayName "Default IPSec Phase 2 Auth Set" -Proposal $Proposal -Default | Out-Null
-
-# Configure User Kerberos OR Anonymous Phase 2 Auth Set
-
-$Proposal1 = New-NetIPsecAuthProposal -User -Kerberos
-$Proposal2 = New-NetIPsecAuthProposal -Anonymous
-New-NetIPsecPhase2AuthSet -Name "User Kerberos OR Anonymous" -DisplayName "User Kerberos OR Anonymous" -Proposal $Proposal1,$Proposal2 | Out-Null
+New-NetIPsecPhase2AuthSet -Name "User Kerberos" -DisplayName "User Kerberos" -Proposal $Proposal | Out-Null
 
 # Create IPSec Rule for Domain Controllers
 
-New-NetIPsecRule -Name "Domain Controllers" -DisplayName "Domain Controllers" -InboundSecurity Request -OutboundSecurity Request -Phase1AuthSet "{E5A5D32A-4BCE-4e4d-B07F-4AB1BA7E5FE3}" -Phase2AuthSet "User Kerberos OR Anonymous" -RemoteAddress 172.20.1.13,172.20.1.19 | Out-Null
+New-NetIPsecRule -Name "Domain Controllers" -DisplayName "Domain Controllers" -InboundSecurity Request -OutboundSecurity Request -Phase1AuthSet "{E5A5D32A-4BCE-4e4d-B07F-4AB1BA7E5FE3}" -RemoteAddress 172.20.1.13,172.20.1.19 | Out-Null
 
 # Create IPSec Rule for adcm01.ad.ajf8729.com
 
-New-NetIPsecRule -Name "adcm01.ad.ajf8729.com:445" -DisplayName "adcm01.ad.ajf8729.com" -InboundSecurity Request -OutboundSecurity Request -Phase1AuthSet "{E5A5D32A-4BCE-4e4d-B07F-4AB1BA7E5FE3}" -Phase2AuthSet "{E5A5D32A-4BCE-4e4d-B07F-4AB1BA7E5FE4}" -RemoteAddress 172.20.1.16 -Protocol TCP -RemotePort 445 | Out-Null
+New-NetIPsecRule -Name "adcm01.ad.ajf8729.com:445" -DisplayName "adcm01.ad.ajf8729.com" -InboundSecurity Request -OutboundSecurity Request -Phase1AuthSet "{E5A5D32A-4BCE-4e4d-B07F-4AB1BA7E5FE3}" -Phase2AuthSet "User Kerberos" -RemoteAddress 172.20.1.16 -Protocol TCP -RemotePort 445 | Out-Null
 
 #Create IPSec Rule for apps.ad.ajf8729.com
 
-New-NetIPsecRule -Name "apps.ad.ajf8729.com:8080" -DisplayName "apps.ad.ajf8729.com" -InboundSecurity Require -OutboundSecurity Require -Phase1AuthSet "{E5A5D32A-4BCE-4e4d-B07F-4AB1BA7E5FE3}" -Phase2AuthSet "{E5A5D32A-4BCE-4e4d-B07F-4AB1BA7E5FE4}" -RemoteAddress 172.20.1.21 -Protocol TCP -RemotePort 8080 | Out-Null
+New-NetIPsecRule -Name "apps.ad.ajf8729.com:8080" -DisplayName "apps.ad.ajf8729.com" -InboundSecurity Require -OutboundSecurity Require -Phase1AuthSet "{E5A5D32A-4BCE-4e4d-B07F-4AB1BA7E5FE3}" -Phase2AuthSet "User Kerberos" -RemoteAddress 172.20.1.21 -Protocol TCP -RemotePort 8080 | Out-Null
