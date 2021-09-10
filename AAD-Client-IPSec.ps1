@@ -5,8 +5,9 @@ $Proposal = New-NetIPsecMainModeCryptoProposal -Encryption AES256 -Hash SHA256 -
 New-NetIPsecMainModeCryptoSet -DisplayName "Default Main Mode Crypto Set" -Proposal $Proposal -ForceDiffieHellman $true -Default | Out-Null
 
 # Default Quick Mode Crypto Set - {E5A5D32A-4BCE-4e4d-B07F-4AB1BA7E5FE2}
-$Proposal = New-NetIPsecQuickModeCryptoProposal -Encapsulation ESP -Encryption AESGCM256 -ESPHash AESGMAC256
-New-NetIPsecQuickModeCryptoSet -DisplayName "Default Quick Mode Crypto Set" -Proposal $Proposal -Default | Out-Null
+$Proposal1 = New-NetIPsecQuickModeCryptoProposal -Encapsulation ESP -ESPHash AESGMAC256
+$Proposal2 = New-NetIPsecQuickModeCryptoProposal -Encapsulation ESP -ESPHash AESGMAC256 -Encryption AESGCM256
+New-NetIPsecQuickModeCryptoSet -DisplayName "Default Quick Mode Crypto Set" -Proposal $Proposal1,$Proposal2 -Default | Out-Null
 
 # Default Phase 1 Auth Set - {E5A5D32A-4BCE-4e4d-B07F-4AB1BA7E5FE3}
 $Proposal = New-NetIPsecAuthProposal -Machine -Cert -Authority "DC=com, DC=ajf8729, DC=ad, CN=AJF8729 Root Certificate Authority" -AuthorityType Root
