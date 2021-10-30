@@ -26,6 +26,7 @@ $OUs = (
     "Groups",
     "Kiosks",
     "Servers",
+    "ServiceAccounts",
     "Staging",
     "Users"
 )
