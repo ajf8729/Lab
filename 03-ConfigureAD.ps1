@@ -24,6 +24,7 @@ $OUs = (
     "Autopilot",
     "Workstations",
     "Groups",
+    "Kiosks",
     "Servers",
     "Staging",
     "Users"
@@ -80,6 +81,7 @@ foreach ($OU in $OUs) {
 
 Add-ADGroupMember -Identity "OUAdmin_LAB" -Members (Get-ADGroup -Identity "RBAC_InfrastructureAdmins")
 Add-ADGroupMember -Identity "OUAdmin_LAB_Autopilot" -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
+Add-ADGroupMember -Identity "OUAdmin_LAB_Kiosks" -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
 Add-ADGroupMember -Identity "OUAdmin_LAB_Workstations" -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
 Add-ADGroupMember -Identity "OUAdmin_LAB_Servers" -Members (Get-ADGroup -Identity "RBAC_ServerAdmins")
 Add-ADGroupMember -Identity "OUAdmin_LAB_Staging" -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
@@ -167,6 +169,7 @@ $GPONames = (
     "DC - Default Security Policy",
     "All - Default Security Policy",
     "Autopilot - Default Security Policy",
+    "Kiosk - Default Security Policy",
     "Server - Default Security Policy",
     "Server - ConfigMgr",
     "Staging - Default Security Policy",
@@ -183,6 +186,7 @@ foreach ($GPOName in $GPONames) {
 $GPONames = (
     "All - Default Security Policy",
     "Autopilot - Default Security Policy",
+    "Kiosk - Default Security Policy",
     "Server - Default Security Policy",
     "Server - ConfigMgr",
     "Staging - Default Security Policy",
@@ -205,6 +209,7 @@ foreach ($GPOName in $GPONames) {
 
 $GPONames = (
     "Autopilot - Default Security Policy",
+    "Kiosk - Default Security Policy",
     "Staging - Default Security Policy",
     "Workstation - Default Security Policy"
 )
@@ -227,6 +232,9 @@ New-GPLink -Name "Server - ConfigMgr" -Target "OU=CM,OU=Servers,OU=LAB,DC=lab,DC
 
 New-GPLink -Name "Autopilot - Default Security Policy" -Target "OU=Autopilot,OU=LAB,DC=lab,DC=ajf8729,DC=com" -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
 New-GPLink -Name "Workstation - Default Security Policy" -Target "OU=Autopilot,OU=LAB,DC=lab,DC=ajf8729,DC=com" -LinkEnabled Yes -Enforced No -Order 2 | Out-Null
+
+New-GPLink -Name "Kiosk - Default Security Policy" -Target "OU=Kiosks,OU=LAB,DC=lab,DC=ajf8729,DC=com" -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
+New-GPLink -Name "Workstation - Default Security Policy" -Target "OU=Kiosks,OU=LAB,DC=lab,DC=ajf8729,DC=com" -LinkEnabled Yes -Enforced No -Order 2 | Out-Null
 
 New-GPLink -Name "Staging - Default Security Policy" -Target "OU=Staging,OU=LAB,DC=lab,DC=ajf8729,DC=com" -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
 New-GPLink -Name "Workstation - Default Security Policy" -Target "OU=Staging,OU=LAB,DC=lab,DC=ajf8729,DC=com" -LinkEnabled Yes -Enforced No -Order 2 | Out-Null
