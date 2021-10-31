@@ -1,12 +1,20 @@
-$SafeModeAdministratorPassword = Read-Host -Prompt "Enter the safe mode administrator password" -AsSecureString
+[CmdletBinding()]
+Param(
+    [Parameter(Mandatory=$true)]
+    [string]$DomainName,
+    [Parameter(Mandatory=$true)]
+    [string]$DomainNetbiosName
+)
+
+$SafeModeAdministratorPassword = Read-Host -Prompt "Enter the safe mode administrator password" -AsSecureString -Force
 
 Install-WindowsFeature -Name AD-Domain-Services,DNS -IncludeManagementTools | Out-Null
 
 Import-Module -Name ADDSDeployment
 
 $Parameters = @{
-    DomainName                    = "lab.ajf8729.com";
-    DomainNetbiosName             = "LAB";
+    DomainName                    = $DomainName;
+    DomainNetbiosName             = $DomainNetbiosName;
     ForestMode                    = 'WinThreshold';
     DomainMode                    = 'WinThreshold';
     DatabasePath                  = 'C:\Windows\NTDS';
