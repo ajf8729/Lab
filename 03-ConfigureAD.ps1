@@ -3,10 +3,10 @@ Import-Module -Name DnsServer
 
 # Variables
 
-$DAPassword = Read-Host -Prompt "Enter domain admin account password" -AsSecureString
-$SAPassword = Read-Host -Prompt "Enter server admin account password" -AsSecureString
-$WAPassword = Read-Host -Prompt "Enter workstation admin account password" -AsSecureString
-$Password = Read-Host -Prompt "Enter user account password" -AsSecureString
+$DAPassword = Read-Host -Prompt "Enter domain admin account password" -AsSecureString -Force
+$SAPassword = Read-Host -Prompt "Enter server admin account password" -AsSecureString -Force
+$WAPassword = Read-Host -Prompt "Enter workstation admin account password" -AsSecureString -Force
+$Password = Read-Host -Prompt "Enter user account password" -AsSecureString -Force
 
 # Create DNS reverse lookup zone
 
