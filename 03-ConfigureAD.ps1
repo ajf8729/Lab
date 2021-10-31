@@ -17,7 +17,7 @@ $WAPassword = Read-Host -Prompt "Enter workstation admin account password" -AsSe
 $Password   = Read-Host -Prompt "Enter user account password" -AsSecureString
 $DistinguishedName = (Get-ADDomain).DistinguishedName
 $NetBIOSName = (Get-ADDomain).NetBIOSName
-$PrimaryUpnSuffix = (Get-ADDomain).Name
+$DomainName = (Get-ADDomain).Name
 
 # Create DNS reverse lookup zone
 
@@ -109,8 +109,8 @@ Add-ADGroupMember -Identity "LocalAdmin_Workstations" -Members (Get-ADGroup -Ide
 
 # Create user accounts
 
-New-ADUser -Name "ajf-da" -SamAccountName "ajf-da" -GivenName "Anthony" -Initials "J" -Surname "Fontanez" -DisplayName "Anthony J. Fontanez (DA)" -Path "OU=T0,$($DistinguishedName)"                                -UserPrincipalName "ajf-da@$PrimaryUpnSuffix"     -AccountPassword $DAPassword -PasswordNeverExpires $true -Enabled $true
-New-ADUser -Name "ajf-sa" -SamAccountName "ajf-sa" -GivenName "Anthony" -Initials "J" -Surname "Fontanez" -DisplayName "Anthony J. Fontanez (SA)" -Path "OU=Administrators,OU=$($NetBIOSName),$($DistinguishedName)" -UserPrincipalName "ajf-sa@$PrimaryUpnSuffix"     -AccountPassword $SAPassword -PasswordNeverExpires $true -Enabled $true
+New-ADUser -Name "ajf-da" -SamAccountName "ajf-da" -GivenName "Anthony" -Initials "J" -Surname "Fontanez" -DisplayName "Anthony J. Fontanez (DA)" -Path "OU=T0,$($DistinguishedName)"                                -UserPrincipalName "ajf-da@$DomainName"           -AccountPassword $DAPassword -PasswordNeverExpires $true -Enabled $true
+New-ADUser -Name "ajf-sa" -SamAccountName "ajf-sa" -GivenName "Anthony" -Initials "J" -Surname "Fontanez" -DisplayName "Anthony J. Fontanez (SA)" -Path "OU=Administrators,OU=$($NetBIOSName),$($DistinguishedName)" -UserPrincipalName "ajf-sa@$DomainName"           -AccountPassword $SAPassword -PasswordNeverExpires $true -Enabled $true
 New-ADUser -Name "ajf-wa" -SamAccountName "ajf-wa" -GivenName "Anthony" -Initials "J" -Surname "Fontanez" -DisplayName "Anthony J. Fontanez (WA)" -Path "OU=Users,OU=$($NetBIOSName),$($DistinguishedName)"          -UserPrincipalName "ajf-wa@$AlternativeUpnSuffix" -AccountPassword $WAPassword -PasswordNeverExpires $true -Enabled $true
 New-ADUser -Name "ajf"    -SamAccountName "ajf"    -GivenName "Anthony" -Initials "J" -Surname "Fontanez" -DisplayName "Anthony J. Fontanez"      -Path "OU=Users,OU=$($NetBIOSName),$($DistinguishedName)"          -UserPrincipalName "ajf@$AlternativeUpnSuffix"    -AccountPassword $Password   -PasswordNeverExpires $true -Enabled $true
 
@@ -128,35 +128,35 @@ Add-KdsRootKey -EffectiveTime ((Get-Date).AddHours((-10)))
 
 # Rename default AD site
 
-Get-ADObject -SearchBase (Get-ADRootDSE).ConfigurationNamingContext -Filter "objectClass -eq 'site' -and name -eq 'Default-First-Site-Name'" | Rename-ADObject -NewName "LAB"
+Get-ADObject -SearchBase (Get-ADRootDSE).ConfigurationNamingContext -Filter "objectClass -eq 'site' -and name -eq 'Default-First-Site-Name'" | Rename-ADObject -NewName $NetBIOSName
 
 # Create AD subnet
 
-New-ADReplicationSubnet -Name "172.20.1.0/24" -Site "LAB"
+New-ADReplicationSubnet -Name $ReverseZoneNetworkId -Site $NetBIOSName
 
 # Enable AD recycling bin
 
-Enable-ADOptionalFeature -Identity "Recycle Bin Feature" -Scope ForestOrConfigurationSet -Target "lab.ajf8729.com" -Confirm:$false
+Enable-ADOptionalFeature -Identity "Recycle Bin Feature" -Scope ForestOrConfigurationSet -Target $DomainName -Confirm:$false
 
 # Redirect default Computers and Users containers
 
-redircmp.exe "OU=Staging,OU=LAB,DC=lab,DC=ajf8729,DC=com" | Out-Null
-redirusr.exe "OU=Users,OU=LAB,DC=lab,DC=ajf8729,DC=com" | Out-Null
+redircmp.exe "OU=Staging,OU=$($NetBIOSName),$($DistinguishedName)" | Out-Null
+redirusr.exe "OU=Users,OU=$($NetBIOSName),$($DistinguishedName)" | Out-Null
 
 #Create ConfigMgr objects
 
-New-ADOrganizationalUnit -Name "CM" -Path "OU=Servers,OU=LAB,DC=lab,DC=ajf8729,DC=com" -Description "ConfigMgr"
+New-ADOrganizationalUnit -Name "CM" -Path "OU=Servers,OU=$($NetBIOSName),$($DistinguishedName)" -Description "ConfigMgr"
 
-New-ADComputer -Name "LABCM01" -Path "OU=CM,OU=Servers,OU=LAB,DC=lab,DC=ajf8729,DC=com"
+New-ADComputer -Name "$($NetBIOSName)CM01" -Path "OU=CM,OU=Servers,OU=$($NetBIOSName),$($DistinguishedName)"
 
-New-ADGroup -Name "CM_Servers" -GroupCategory Security -GroupScope Universal -Path "OU=CM,OU=Servers,OU=LAB,DC=lab,DC=ajf8729,DC=com"
-New-ADGroup -Name "CM_Admins" -GroupCategory Security -GroupScope DomainLocal -Path "OU=CM,OU=Servers,OU=LAB,DC=lab,DC=ajf8729,DC=com"
-New-ADGroup -Name "CM_SQL_Admins" -GroupCategory Security -GroupScope DomainLocal -Path "OU=CM,OU=Servers,OU=LAB,DC=lab,DC=ajf8729,DC=com"
+New-ADGroup -Name "CM_Servers"    -GroupCategory Security -GroupScope Universal   -Path "OU=CM,OU=Servers,OU=$($NetBIOSName),$($DistinguishedName)"
+New-ADGroup -Name "CM_Admins"     -GroupCategory Security -GroupScope DomainLocal -Path "OU=CM,OU=Servers,OU=$($NetBIOSName),$($DistinguishedName)"
+New-ADGroup -Name "CM_SQL_Admins" -GroupCategory Security -GroupScope DomainLocal -Path "OU=CM,OU=Servers,OU=$($NetBIOSName),$($DistinguishedName)"
 
-Add-ADGroupMember -Identity "CM_Servers" -Members (Get-ADComputer -Identity "LABCM01")
-Add-ADGroupMember -Identity "CM_Admins" -Members (Get-ADGroup -Identity "CM_Servers")
-Add-ADGroupMember -Identity "CM_Admins" -Members (Get-ADGroup -Identity "RBAC_InfrastructureAdmins")
-Add-ADGroupMember -Identity "CM_SQL_Admins" -Members (Get-ADGroup -Identity "CM_Admins")
+Add-ADGroupMember -Identity "CM_Servers"    -Members (Get-ADComputer -Identity "LABCM01")
+Add-ADGroupMember -Identity "CM_Admins"     -Members (Get-ADGroup    -Identity "CM_Servers")
+Add-ADGroupMember -Identity "CM_Admins"     -Members (Get-ADGroup    -Identity "RBAC_InfrastructureAdmins")
+Add-ADGroupMember -Identity "CM_SQL_Admins" -Members (Get-ADGroup    -Identity "CM_Admins")
 
 New-ADServiceAccount -Name "svc_CM_SQL" -SamAccountName "svc_CM_SQL" -DNSHostName "labcm01.lab.ajf8729.com" -KerberosEncryptionType AES128,AES256 -Path "OU=CM,OU=Servers,OU=LAB,DC=lab,DC=ajf8729,DC=com" -PrincipalsAllowedToRetrieveManagedPassword (Get-ADGroup -Identity "CM_Servers")
 
