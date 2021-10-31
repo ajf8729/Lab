@@ -6,34 +6,32 @@ Param(
     [string]$AlternativeUpnSuffix
 )
 
+# Modules
 Import-Module -Name ActiveDirectory
 Import-Module -Name DnsServer
 
 # Variables
-
 $DAPassword = Read-Host -Prompt "Enter domain admin account password" -AsSecureString
 $SAPassword = Read-Host -Prompt "Enter server admin account password" -AsSecureString
 $WAPassword = Read-Host -Prompt "Enter workstation admin account password" -AsSecureString
 $Password   = Read-Host -Prompt "Enter user account password" -AsSecureString
-$DistinguishedName = (Get-ADDomain).DistinguishedName
-$NetBIOSName = (Get-ADDomain).NetBIOSName
-$DomainName = (Get-ADDomain).Name
-$RootOUDistinguishedName = "OU=$($NetBIOSName),$($DistinguishedName)"
+
+$DomainDistinguishedName = (Get-ADDomain).DistinguishedName
+$DomainName              = (Get-ADDomain).Name
+$DomainNetBIOSName       = (Get-ADDomain).NetBIOSName
+$RootOUDistinguishedName = "OU=$($DomainNetBIOSName),$($DomainDistinguishedName)"
 
 # Create DNS reverse lookup zone
-
 Add-DnsServerPrimaryZone -NetworkID $ReverseZoneNetworkId -ReplicationScope Domain
 
 # Add alternative UPN suffix
 Set-ADForest -UPNSuffixes @{add="$AlternativeUpnSuffix"}
 
 # Create root OUs
-
-New-ADOrganizationalUnit -Name $NetBIOSName -Path $DistinguishedName -Description "$NetBIOSName Root OU"
-New-ADOrganizationalUnit -Name "T0" -Path $DistinguishedName -Description "Tier 0 Objects"
+New-ADOrganizationalUnit -Name $DomainNetBIOSName -Path $DomainDistinguishedName -Description "$DomainNetBIOSName Root OU"
+New-ADOrganizationalUnit -Name "T0" -Path $DomainDistinguishedName -Description "Tier 0 Objects"
 
 # Create subOUs
-
 $OUs = (
     "Administrators",
     "Autopilot",
@@ -47,34 +45,29 @@ $OUs = (
 )
 
 foreach ($OU in $OUs) {
-    New-ADOrganizationalUnit -Name $OU -Path "OU=$OU,$DistinguishedName" -Description "$NetBIOSName $OU"
+    New-ADOrganizationalUnit -Name $OU -Path "OU=$OU,$DomainDistinguishedName" -Description "$DomainNetBIOSName $OU"
 }
 
 # Create RBAC groups
-
-New-ADGroup -Name "RBAC_InfrastructureAdmins" -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$DistinguishedName"
-New-ADGroup -Name "RBAC_ServerAdmins" -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$DistinguishedName"
-New-ADGroup -Name "RBAC_WorkstationAdmins" -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$DistinguishedName"
+New-ADGroup -Name "RBAC_InfrastructureAdmins" -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$DomainDistinguishedName"
+New-ADGroup -Name "RBAC_ServerAdmins" -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$DomainDistinguishedName"
+New-ADGroup -Name "RBAC_WorkstationAdmins" -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$DomainDistinguishedName"
 
 # Create local admin groups
-
-New-ADGroup -Name "LocalAdmin_Servers" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$DistinguishedName"
-New-ADGroup -Name "LocalAdmin_Workstations" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$DistinguishedName"
+New-ADGroup -Name "LocalAdmin_Servers" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$DomainDistinguishedName"
+New-ADGroup -Name "LocalAdmin_Workstations" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$DomainDistinguishedName"
 
 # Create root OU admin group
-
-New-ADGroup -Name "OUAdmin_$($NetBIOSName)" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$DistinguishedName"
+New-ADGroup -Name "OUAdmin_$($DomainNetBIOSName)" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$DomainDistinguishedName"
 
 # Create subOU admin groups
-
 foreach ($OU in $OUs) {
-    New-ADGroup -Name "OUAdmin_$($NetBIOSName)_$($OU)" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$DistinguishedName"
+    New-ADGroup -Name "OUAdmin_$($DomainNetBIOSName)_$($OU)" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$DomainDistinguishedName"
 }
 
 # Delegate root OU permissions
-
-$OU = "AD:\OU=$($NetBIOSName),$($DistinguishedName)"
-$Group = Get-ADGroup -Identity "OUAdmin_$($NetBIOSName)"
+$OU = "AD:\OU=$($DomainNetBIOSName),$($DomainDistinguishedName)"
+$Group = Get-ADGroup -Identity "OUAdmin_$($DomainNetBIOSName)"
 $SID = New-Object -TypeName System.Security.Principal.SecurityIdentifier $Group.SID
 $ACL = Get-Acl -Path $OU
 $ACE = New-Object -TypeName System.DirectoryServices.ActiveDirectoryAccessRule $SID,"GenericAll","Allow",1
@@ -82,10 +75,9 @@ $ACL.AddAccessRule($ACE)
 Set-Acl -Path $OU -AclObject $ACL
 
 # Delegate subOU permissions
-
 foreach ($OU in $OUs) {
-    $subOU = "AD:\OU=$($OU),OU=$($NetBIOSName),$($DistinguishedName)"
-    $Group = Get-ADGroup -Identity "OUAdmin_$($NetBIOSName)_$($OU)"
+    $subOU = "AD:\OU=$($OU),OU=$($DomainNetBIOSName),$($DomainDistinguishedName)"
+    $Group = Get-ADGroup -Identity "OUAdmin_$($DomainNetBIOSName)_$($OU)"
     $SID = New-Object -TypeName System.Security.Principal.SecurityIdentifier $Group.SID
     $ACL = Get-Acl -Path $subOU
     $ACE = New-Object -TypeName System.DirectoryServices.ActiveDirectoryAccessRule $SID,"GenericAll","Allow",1
@@ -94,29 +86,25 @@ foreach ($OU in $OUs) {
 }
 
 # Grant OU admin access
-
-Add-ADGroupMember -Identity "OUAdmin_$($NetBIOSName)"              -Members (Get-ADGroup -Identity "RBAC_InfrastructureAdmins")
-Add-ADGroupMember -Identity "OUAdmin_$($NetBIOSName)_Autopilot"    -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
-Add-ADGroupMember -Identity "OUAdmin_$($NetBIOSName)_Kiosks"       -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
-Add-ADGroupMember -Identity "OUAdmin_$($NetBIOSName)_Workstations" -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
-Add-ADGroupMember -Identity "OUAdmin_$($NetBIOSName)_Servers"      -Members (Get-ADGroup -Identity "RBAC_ServerAdmins")
-Add-ADGroupMember -Identity "OUAdmin_$($NetBIOSName)_Staging"      -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
+Add-ADGroupMember -Identity "OUAdmin_$($DomainNetBIOSName)"              -Members (Get-ADGroup -Identity "RBAC_InfrastructureAdmins")
+Add-ADGroupMember -Identity "OUAdmin_$($DomainNetBIOSName)_Autopilot"    -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
+Add-ADGroupMember -Identity "OUAdmin_$($DomainNetBIOSName)_Kiosks"       -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
+Add-ADGroupMember -Identity "OUAdmin_$($DomainNetBIOSName)_Workstations" -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
+Add-ADGroupMember -Identity "OUAdmin_$($DomainNetBIOSName)_Servers"      -Members (Get-ADGroup -Identity "RBAC_ServerAdmins")
+Add-ADGroupMember -Identity "OUAdmin_$($DomainNetBIOSName)_Staging"      -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
 
 # Grant local admin access
-
 Add-ADGroupMember -Identity "LocalAdmin_Servers"      -Members (Get-ADGroup -Identity "RBAC_InfrastructureAdmins")
 Add-ADGroupMember -Identity "LocalAdmin_Servers"      -Members (Get-ADGroup -Identity "RBAC_ServerAdmins")
 Add-ADGroupMember -Identity "LocalAdmin_Workstations" -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
 
 # Create user accounts
-
-New-ADUser -Name "ajf-da" -SamAccountName "ajf-da" -GivenName "Anthony" -Initials "J" -Surname "Fontanez" -DisplayName "Anthony J. Fontanez (DA)" -Path "OU=T0,$DistinguishedName"                   -UserPrincipalName "ajf-da@$DomainName"           -AccountPassword $DAPassword -PasswordNeverExpires $true -Enabled $true
+New-ADUser -Name "ajf-da" -SamAccountName "ajf-da" -GivenName "Anthony" -Initials "J" -Surname "Fontanez" -DisplayName "Anthony J. Fontanez (DA)" -Path "OU=T0,$DomainDistinguishedName"                   -UserPrincipalName "ajf-da@$DomainName"           -AccountPassword $DAPassword -PasswordNeverExpires $true -Enabled $true
 New-ADUser -Name "ajf-sa" -SamAccountName "ajf-sa" -GivenName "Anthony" -Initials "J" -Surname "Fontanez" -DisplayName "Anthony J. Fontanez (SA)" -Path "OU=Administrators,$RootOUDistinguishedName" -UserPrincipalName "ajf-sa@$DomainName"           -AccountPassword $SAPassword -PasswordNeverExpires $true -Enabled $true
 New-ADUser -Name "ajf-wa" -SamAccountName "ajf-wa" -GivenName "Anthony" -Initials "J" -Surname "Fontanez" -DisplayName "Anthony J. Fontanez (WA)" -Path "OU=Users,$RootOUDistinguishedName"          -UserPrincipalName "ajf-wa@$AlternativeUpnSuffix" -AccountPassword $WAPassword -PasswordNeverExpires $true -Enabled $true
 New-ADUser -Name "ajf"    -SamAccountName "ajf"    -GivenName "Anthony" -Initials "J" -Surname "Fontanez" -DisplayName "Anthony J. Fontanez"      -Path "OU=Users,$RootOUDistinguishedName"          -UserPrincipalName "ajf@$AlternativeUpnSuffix"    -AccountPassword $Password   -PasswordNeverExpires $true -Enabled $true
 
 # Add users to necessary groups
-
 Add-ADGroupMember -Identity "Domain Admins"             -Members (Get-ADUser -Identity "ajf-da")
 Add-ADGroupMember -Identity "Enterprise Admins"         -Members (Get-ADUser -Identity "ajf-da")
 Add-ADGroupMember -Identity "Schema Admins"             -Members (Get-ADUser -Identity "ajf-da")
@@ -124,46 +112,40 @@ Add-ADGroupMember -Identity "RBAC_InfrastructureAdmins" -Members (Get-ADUser -Id
 Add-ADGroupMember -Identity "RBAC_WorkstationAdmins"    -Members (Get-ADUser -Identity "ajf-wa")
 
 # Create KDS root key
-
 Add-KdsRootKey -EffectiveTime ((Get-Date).AddHours((-10)))
 
 # Rename default AD site
-
-Get-ADObject -SearchBase (Get-ADRootDSE).ConfigurationNamingContext -Filter "objectClass -eq 'site' -and name -eq 'Default-First-Site-Name'" | Rename-ADObject -NewName $NetBIOSName
+Get-ADObject -SearchBase (Get-ADRootDSE).ConfigurationNamingContext -Filter "objectClass -eq 'site' -and name -eq 'Default-First-Site-Name'" | Rename-ADObject -NewName $DomainNetBIOSName
 
 # Create AD subnet
-
-New-ADReplicationSubnet -Name $ReverseZoneNetworkId -Site $NetBIOSName
+New-ADReplicationSubnet -Name $ReverseZoneNetworkId -Site $DomainNetBIOSName
 
 # Enable AD recycling bin
-
 Enable-ADOptionalFeature -Identity "Recycle Bin Feature" -Scope ForestOrConfigurationSet -Target $DomainName -Confirm:$false
 
 # Redirect default Computers and Users containers
-
 redircmp.exe "OU=Staging,$RootOUDistinguishedName" | Out-Null
 redirusr.exe "OU=Users,$RootOUDistinguishedName" | Out-Null
 
 #Create ConfigMgr objects
-
 New-ADOrganizationalUnit -Name "CM" -Path "OU=Servers,$RootOUDistinguishedName" -Description "ConfigMgr"
 
-New-ADComputer -Name "$($NetBIOSName)CM01" -Path "OU=CM,OU=Servers,$RootOUDistinguishedName"
+New-ADComputer -Name "$($DomainNetBIOSName)CM01" -Path "OU=CM,OU=Servers,$RootOUDistinguishedName"
 
 New-ADGroup -Name "CM_Servers"    -GroupCategory Security -GroupScope Universal   -Path "OU=CM,OU=Servers,$RootOUDistinguishedName"
 New-ADGroup -Name "CM_Admins"     -GroupCategory Security -GroupScope DomainLocal -Path "OU=CM,OU=Servers,$RootOUDistinguishedName"
 New-ADGroup -Name "CM_SQL_Admins" -GroupCategory Security -GroupScope DomainLocal -Path "OU=CM,OU=Servers,$RootOUDistinguishedName"
 
-Add-ADGroupMember -Identity "CM_Servers"    -Members (Get-ADComputer -Identity "$($NetBIOSName)CM01")
+Add-ADGroupMember -Identity "CM_Servers"    -Members (Get-ADComputer -Identity "$($DomainNetBIOSName)CM01")
 Add-ADGroupMember -Identity "CM_Admins"     -Members (Get-ADGroup    -Identity "CM_Servers")
 Add-ADGroupMember -Identity "CM_Admins"     -Members (Get-ADGroup    -Identity "RBAC_InfrastructureAdmins")
 Add-ADGroupMember -Identity "CM_SQL_Admins" -Members (Get-ADGroup    -Identity "CM_Admins")
 
-New-ADServiceAccount -Name "svc_CM_SQL" -SamAccountName "svc_CM_SQL" -DNSHostName "$($NetBIOSName)CM01.$($DomainName)" -KerberosEncryptionType AES128,AES256 -Path "OU=CM,OU=Servers,$RootOUDistinguishedName" -PrincipalsAllowedToRetrieveManagedPassword (Get-ADGroup -Identity "CM_Servers")
+New-ADServiceAccount -Name "svc_CM_SQL" -SamAccountName "svc_CM_SQL" -DNSHostName "$($DomainNetBIOSName)CM01.$($DomainName)" -KerberosEncryptionType AES128,AES256 -Path "OU=CM,OU=Servers,$RootOUDistinguishedName" -PrincipalsAllowedToRetrieveManagedPassword (Get-ADGroup -Identity "CM_Servers")
 
-New-ADObject -Name "System Management" -Type Container -Path "CN=System,$($DistinguishedName)"
+New-ADObject -Name "System Management" -Type Container -Path "CN=System,$($DomainDistinguishedName)"
 
-$CN = "AD:\CN=System Management,CN=System,$($DistinguishedName)"
+$CN = "AD:\CN=System Management,CN=System,$($DomainDistinguishedName)"
 $Group = Get-ADGroup -Identity "CM_Admins"
 $SID = New-Object -TypeName System.Security.Principal.SecurityIdentifier $Group.SID
 $ACL = Get-Acl -Path $CN
@@ -172,12 +154,10 @@ $ACL.AddAccessRule($ACE)
 Set-Acl -Path $CN -AclObject $ACL
 
 # Create central store
-
 New-Item -Path "C:\Windows\SYSVOL\domain\Policies" -Name PolicyDefinitions -ItemType Directory | Out-Null
 Copy-Item -Path "C:\Windows\PolicyDefinitions\*" -Destination "C:\Windows\SYSVOL\domain\Policies\PolicyDefinitions\" -Recurse
 
 # Create GPOs
-
 $GPONames = (
     $DomainName,
     "DC - Default Security Policy",
@@ -196,7 +176,6 @@ foreach ($GPOName in $GPONames) {
 }
 
 # Set GPO permissions
-
 $GPONames = (
     "All - Default Security Policy",
     "Autopilot - Default Security Policy",
@@ -233,11 +212,10 @@ foreach ($GPOName in $GPONames) {
 }
 
 # Link GPOs
-
-New-GPLink -Name $DomainName                             -Target $DistinguishedName                            -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
+New-GPLink -Name $DomainName                             -Target $DomainDistinguishedName                            -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
 New-GPLink -Name "All - Default Security Policy"         -Target $RootOUDistinguishedName                      -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
 New-GPLink -Name "Autopilot - Default Security Policy"   -Target "OU=Autopilot,$RootOUDistinguishedName"       -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
-New-GPLink -Name "DC - Default Security Policy"          -Target "OU=Domain Controllers,$($DistinguishedName)" -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
+New-GPLink -Name "DC - Default Security Policy"          -Target "OU=Domain Controllers,$($DomainDistinguishedName)" -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
 New-GPLink -Name "Kiosk - Default Security Policy"       -Target "OU=Kiosks,$RootOUDistinguishedName"          -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
 New-GPLink -Name "Workstation - Default Security Policy" -Target "OU=Autopilot,$RootOUDistinguishedName"       -LinkEnabled Yes -Enforced No -Order 2 | Out-Null
 New-GPLink -Name "Workstation - Default Security Policy" -Target "OU=Kiosks,$RootOUDistinguishedName"          -LinkEnabled Yes -Enforced No -Order 2 | Out-Null
