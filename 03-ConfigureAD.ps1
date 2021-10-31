@@ -1,3 +1,11 @@
+[CmdletBinding()]
+Param(
+    [Parameter(Mandatory=$true)]
+    [string]$ReverseZoneNetworkId,
+    [Parameter(Mandatory=$true)]
+    [string]$AlternativeUpnSuffix
+)
+
 Import-Module -Name ActiveDirectory
 Import-Module -Name DnsServer
 
@@ -6,16 +14,22 @@ Import-Module -Name DnsServer
 $DAPassword = Read-Host -Prompt "Enter domain admin account password" -AsSecureString
 $SAPassword = Read-Host -Prompt "Enter server admin account password" -AsSecureString
 $WAPassword = Read-Host -Prompt "Enter workstation admin account password" -AsSecureString
-$Password = Read-Host -Prompt "Enter user account password" -AsSecureString
+$Password   = Read-Host -Prompt "Enter user account password" -AsSecureString
+$DistinguishedName = (Get-ADDomain).DistinguishedName
+$NetBIOSName = (Get-ADDomain).NetBIOSName
+$PrimaryUpnSuffix = (Get-ADDomain).Name
 
 # Create DNS reverse lookup zone
 
-Add-DnsServerPrimaryZone -NetworkID "172.20.1.0/24" -ReplicationScope Domain
+Add-DnsServerPrimaryZone -NetworkID $ReverseZoneNetworkId -ReplicationScope Domain
+
+# Add alternative UPN suffix
+Set-ADForest -UPNSuffixes @{add="$AlternativeUpnSuffix"}
 
 # Create root OUs
 
-New-ADOrganizationalUnit -Name "LAB" -Path "DC=lab,DC=ajf8729,DC=com" -Description "LAB Root OU"
-New-ADOrganizationalUnit -Name "T0" -Path "DC=lab,DC=ajf8729,DC=com" -Description "Tier 0 Objects"
+New-ADOrganizationalUnit -Name $NetBIOSName -Path $DistinguishedName -Description "$NetBIOSName Root OU"
+New-ADOrganizationalUnit -Name "T0" -Path $DistinguishedName -Description "Tier 0 Objects"
 
 # Create subOUs
 
@@ -32,34 +46,34 @@ $OUs = (
 )
 
 foreach ($OU in $OUs) {
-    New-ADOrganizationalUnit -Name $OU -Path "OU=LAB,DC=lab,DC=ajf8729,DC=com" -Description "LAB $OU"
+    New-ADOrganizationalUnit -Name $OU -Path "OU=$OU,$DistinguishedName" -Description "$NetBIOSName $OU"
 }
 
 # Create RBAC groups
 
-New-ADGroup -Name "RBAC_InfrastructureAdmins" -GroupCategory Security -GroupScope Universal -Path "OU=Groups,OU=LAB,DC=lab,DC=ajf8729,DC=com"
-New-ADGroup -Name "RBAC_ServerAdmins" -GroupCategory Security -GroupScope Universal -Path "OU=Groups,OU=LAB,DC=lab,DC=ajf8729,DC=com"
-New-ADGroup -Name "RBAC_WorkstationAdmins" -GroupCategory Security -GroupScope Universal -Path "OU=Groups,OU=LAB,DC=lab,DC=ajf8729,DC=com"
+New-ADGroup -Name "RBAC_InfrastructureAdmins" -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$DistinguishedName"
+New-ADGroup -Name "RBAC_ServerAdmins" -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$DistinguishedName"
+New-ADGroup -Name "RBAC_WorkstationAdmins" -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$DistinguishedName"
 
 # Create local admin groups
 
-New-ADGroup -Name "LocalAdmin_Servers" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,OU=LAB,DC=lab,DC=ajf8729,DC=com"
-New-ADGroup -Name "LocalAdmin_Workstations" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,OU=LAB,DC=lab,DC=ajf8729,DC=com"
+New-ADGroup -Name "LocalAdmin_Servers" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$DistinguishedName"
+New-ADGroup -Name "LocalAdmin_Workstations" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$DistinguishedName"
 
 # Create root OU admin group
 
-New-ADGroup -Name "OUAdmin_LAB" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,OU=LAB,DC=lab,DC=ajf8729,DC=com"
+New-ADGroup -Name "OUAdmin_$($NetBIOSName)" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$DistinguishedName"
 
 # Create subOU admin groups
 
 foreach ($OU in $OUs) {
-    New-ADGroup -Name "OUAdmin_LAB_$($OU)" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,OU=LAB,DC=lab,DC=ajf8729,DC=com"
+    New-ADGroup -Name "OUAdmin_$($NetBIOSName)_$($OU)" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$DistinguishedName"
 }
 
 # Delegate root OU permissions
 
-$OU = "AD:\OU=LAB,DC=lab,DC=ajf8729,DC=com"
-$Group = Get-ADGroup -Identity "OUAdmin_LAB"
+$OU = "AD:\OU=$($NetBIOSName),$($DistinguishedName)"
+$Group = Get-ADGroup -Identity "OUAdmin_$($NetBIOSName)"
 $SID = New-Object -TypeName System.Security.Principal.SecurityIdentifier $Group.SID
 $ACL = Get-Acl -Path $OU
 $ACE = New-Object -TypeName System.DirectoryServices.ActiveDirectoryAccessRule $SID,"GenericAll","Allow",1
@@ -69,8 +83,8 @@ Set-Acl -Path $OU -AclObject $ACL
 # Delegate subOU permissions
 
 foreach ($OU in $OUs) {
-    $subOU = "AD:\OU=$($OU),OU=LAB,DC=lab,DC=ajf8729,DC=com"
-    $Group = Get-ADGroup -Identity "OUAdmin_LAB_$($OU)"
+    $subOU = "AD:\OU=$($OU),OU=$($NetBIOSName),$($DistinguishedName)"
+    $Group = Get-ADGroup -Identity "OUAdmin_$($NetBIOSName)_$($OU)"
     $SID = New-Object -TypeName System.Security.Principal.SecurityIdentifier $Group.SID
     $ACL = Get-Acl -Path $subOU
     $ACE = New-Object -TypeName System.DirectoryServices.ActiveDirectoryAccessRule $SID,"GenericAll","Allow",1
@@ -80,35 +94,33 @@ foreach ($OU in $OUs) {
 
 # Grant OU admin access
 
-Add-ADGroupMember -Identity "OUAdmin_LAB" -Members (Get-ADGroup -Identity "RBAC_InfrastructureAdmins")
-Add-ADGroupMember -Identity "OUAdmin_LAB_Autopilot" -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
-Add-ADGroupMember -Identity "OUAdmin_LAB_Kiosks" -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
-Add-ADGroupMember -Identity "OUAdmin_LAB_Workstations" -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
-Add-ADGroupMember -Identity "OUAdmin_LAB_Servers" -Members (Get-ADGroup -Identity "RBAC_ServerAdmins")
-Add-ADGroupMember -Identity "OUAdmin_LAB_Staging" -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
+Add-ADGroupMember -Identity "OUAdmin_$($NetBIOSName)"              -Members (Get-ADGroup -Identity "RBAC_InfrastructureAdmins")
+Add-ADGroupMember -Identity "OUAdmin_$($NetBIOSName)_Autopilot"    -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
+Add-ADGroupMember -Identity "OUAdmin_$($NetBIOSName)_Kiosks"       -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
+Add-ADGroupMember -Identity "OUAdmin_$($NetBIOSName)_Workstations" -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
+Add-ADGroupMember -Identity "OUAdmin_$($NetBIOSName)_Servers"      -Members (Get-ADGroup -Identity "RBAC_ServerAdmins")
+Add-ADGroupMember -Identity "OUAdmin_$($NetBIOSName)_Staging"      -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
 
 # Grant local admin access
 
-Add-ADGroupMember -Identity "LocalAdmin_Servers" -Members (Get-ADGroup -Identity "RBAC_InfrastructureAdmins")
-Add-ADGroupMember -Identity "LocalAdmin_Servers" -Members (Get-ADGroup -Identity "RBAC_ServerAdmins")
+Add-ADGroupMember -Identity "LocalAdmin_Servers"      -Members (Get-ADGroup -Identity "RBAC_InfrastructureAdmins")
+Add-ADGroupMember -Identity "LocalAdmin_Servers"      -Members (Get-ADGroup -Identity "RBAC_ServerAdmins")
 Add-ADGroupMember -Identity "LocalAdmin_Workstations" -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
 
 # Create user accounts
 
-New-ADUser -Name "ajf-da" -SamAccountName "ajf-da" -GivenName "Anthony" -Initials "J" -Surname "Fontanez" -DisplayName "Anthony J. Fontanez (DA)" -Path "OU=T0,DC=lab,DC=ajf8729,DC=com" -UserPrincipalName "ajf-da@lab.ajf8729.com" -AccountPassword $DAPassword -PasswordNeverExpires $true -Enabled $true
-New-ADUser -Name "ajf-sa" -SamAccountName "ajf-sa" -GivenName "Anthony" -Initials "J" -Surname "Fontanez" -DisplayName "Anthony J. Fontanez (SA)" -Path "OU=Administrators,OU=LAB,DC=lab,DC=ajf8729,DC=com" -UserPrincipalName "ajf-sa@lab.ajf8729.com" -AccountPassword $SAPassword -PasswordNeverExpires $true -Enabled $true
-New-ADUser -Name "ajf-wa" -SamAccountName "ajf-wa" -GivenName "Anthony" -Initials "J" -Surname "Fontanez" -DisplayName "Anthony J. Fontanez (WA)" -Path "OU=Administrators,OU=LAB,DC=lab,DC=ajf8729,DC=com" -UserPrincipalName "ajf-wa@lab.ajf8729.com" -AccountPassword $WAPassword -PasswordNeverExpires $true -Enabled $true
-New-ADUser -Name "ajf" -SamAccountName "ajf" -GivenName "Anthony" -Initials "J" -Surname "Fontanez" -DisplayName "Anthony J. Fontanez" -Path "OU=Users,OU=LAB,DC=lab,DC=ajf8729,DC=com" -UserPrincipalName "ajf@lab.ajf8729.com" -AccountPassword $Password -PasswordNeverExpires $true -Enabled $true
+New-ADUser -Name "ajf-da" -SamAccountName "ajf-da" -GivenName "Anthony" -Initials "J" -Surname "Fontanez" -DisplayName "Anthony J. Fontanez (DA)" -Path "OU=T0,$($DistinguishedName)"                                -UserPrincipalName "ajf-da@$PrimaryUpnSuffix"     -AccountPassword $DAPassword -PasswordNeverExpires $true -Enabled $true
+New-ADUser -Name "ajf-sa" -SamAccountName "ajf-sa" -GivenName "Anthony" -Initials "J" -Surname "Fontanez" -DisplayName "Anthony J. Fontanez (SA)" -Path "OU=Administrators,OU=$($NetBIOSName),$($DistinguishedName)" -UserPrincipalName "ajf-sa@$PrimaryUpnSuffix"     -AccountPassword $SAPassword -PasswordNeverExpires $true -Enabled $true
+New-ADUser -Name "ajf-wa" -SamAccountName "ajf-wa" -GivenName "Anthony" -Initials "J" -Surname "Fontanez" -DisplayName "Anthony J. Fontanez (WA)" -Path "OU=Users,OU=$($NetBIOSName),$($DistinguishedName)"          -UserPrincipalName "ajf-wa@$AlternativeUpnSuffix" -AccountPassword $WAPassword -PasswordNeverExpires $true -Enabled $true
+New-ADUser -Name "ajf"    -SamAccountName "ajf"    -GivenName "Anthony" -Initials "J" -Surname "Fontanez" -DisplayName "Anthony J. Fontanez"      -Path "OU=Users,OU=$($NetBIOSName),$($DistinguishedName)"          -UserPrincipalName "ajf@$AlternativeUpnSuffix"    -AccountPassword $Password   -PasswordNeverExpires $true -Enabled $true
 
 # Add users to necessary groups
 
-Add-ADGroupMember -Identity "Domain Admins" -Members (Get-ADUser -Identity "ajf-da")
-Add-ADGroupMember -Identity "Enterprise Admins" -Members (Get-ADUser -Identity "ajf-da")
-Add-ADGroupMember -Identity "Schema Admins" -Members (Get-ADUser -Identity "ajf-da")
-
+Add-ADGroupMember -Identity "Domain Admins"             -Members (Get-ADUser -Identity "ajf-da")
+Add-ADGroupMember -Identity "Enterprise Admins"         -Members (Get-ADUser -Identity "ajf-da")
+Add-ADGroupMember -Identity "Schema Admins"             -Members (Get-ADUser -Identity "ajf-da")
 Add-ADGroupMember -Identity "RBAC_InfrastructureAdmins" -Members (Get-ADUser -Identity "ajf-sa")
-
-Add-ADGroupMember -Identity "RBAC_WorkstationAdmins" -Members (Get-ADUser -Identity "ajf-wa")
+Add-ADGroupMember -Identity "RBAC_WorkstationAdmins"    -Members (Get-ADUser -Identity "ajf-wa")
 
 # Create KDS root key
 
