@@ -16,21 +16,23 @@ $RootOUDistinguishedName = "OU=$($DomainNetBIOSName),$($DomainDistinguishedName)
 
 # Download baselines
 
-Invoke-WebRequest -UseBasicParsing -Uri "$($BaseURL)/Windows%2011%20Security%20Baseline.zip"                   -OutFile "Windows11SecurityBaseline.zip"
-Invoke-WebRequest -UseBasicParsing -Uri "$($BaseURL)/Windows%20Server%202022%20Security%20Baseline.zip"        -OutFile "WindowsServer2022SecurityBaseline.zip"
-Invoke-WebRequest -UseBasicParsing -Uri "$($BaseURL)/Microsoft%20365%20Apps%20for%20Enterprise-2104-FINAL.zip" -OutFile "Microsoft365AppsforEnterprise-2104-FINAL.zip"
-Invoke-WebRequest -UseBasicParsing -Uri "$($BaseURL)/Microsoft%20Edge%20v95%20Security%20Baseline.zip"         -OutFile "MicrosoftEdgev95SecurityBaseline.zip"
+New-Item -Path $env:TEMP -Name baselinetemp -ItemType Directory
+
+Invoke-WebRequest -UseBasicParsing -Uri "$($BaseURL)/Windows%2011%20Security%20Baseline.zip"                   -OutFile "$env:TEMP\baselinetemp\Windows11SecurityBaseline.zip"
+Invoke-WebRequest -UseBasicParsing -Uri "$($BaseURL)/Windows%20Server%202022%20Security%20Baseline.zip"        -OutFile "$env:TEMP\baselinetemp\WindowsServer2022SecurityBaseline.zip"
+Invoke-WebRequest -UseBasicParsing -Uri "$($BaseURL)/Microsoft%20365%20Apps%20for%20Enterprise-2104-FINAL.zip" -OutFile "$env:TEMP\baselinetemp\Microsoft365AppsforEnterprise-2104-FINAL.zip"
+Invoke-WebRequest -UseBasicParsing -Uri "$($BaseURL)/Microsoft%20Edge%20v95%20Security%20Baseline.zip"         -OutFile "$env:TEMP\baselinetemp\MicrosoftEdgev95SecurityBaseline.zip"
 
 # Extract baselines
 
-(Get-ChildItem -Path "*.zip").Name | ForEach-Object {
-    Expand-Archive -Path $_ -DestinationPath .
+(Get-ChildItem -Path "$env:TEMP\baselinetemp\*.zip").Name | ForEach-Object {
+    Expand-Archive -Path $env:TEMP\baselinetemp\$_ -DestinationPath .
 }
 
 # Import baselines
 
 (Get-ChildItem -Directory).Name | ForEach-Object {
-    .$_\Scripts\Baseline-ADImport.ps1
+    .$env:TEMP\baselinetemp\$_\Scripts\Baseline-ADImport.ps1
 }
 
 # Link GPOs
