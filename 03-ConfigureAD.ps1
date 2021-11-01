@@ -35,7 +35,7 @@ $CMServerName = "$($DomainNetBIOSName)CM01"
 Add-DnsServerPrimaryZone -NetworkID $ReverseZoneNetworkId -ReplicationScope Domain
 
 # Add alternative UPN suffix
-Set-ADForest -UPNSuffixes @{add="$AlternativeUpnSuffix"}
+Set-ADForest -Identity ((Get-ADForest).Name) -UPNSuffixes @{add="$AlternativeUpnSuffix"}
 
 # Create root OUs
 New-ADOrganizationalUnit -Name $DomainNetBIOSName -Path $DomainDistinguishedName -Description "$DomainNetBIOSName Root OU"
@@ -55,7 +55,7 @@ $OUs = (
 )
 
 foreach ($OU in $OUs) {
-    New-ADOrganizationalUnit -Name $OU -Path "OU=$OU,$DomainDistinguishedName" -Description "$DomainNetBIOSName $OU"
+    New-ADOrganizationalUnit -Name $OU -Path $RootOUDistinguishedName -Description "$DomainNetBIOSName $OU"
 }
 
 # Create RBAC groups
