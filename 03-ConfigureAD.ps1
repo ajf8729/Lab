@@ -3,7 +3,15 @@ Param(
     [Parameter(Mandatory=$true)]
     [string]$ReverseZoneNetworkId,
     [Parameter(Mandatory=$true)]
-    [string]$AlternativeUpnSuffix
+    [string]$AlternativeUpnSuffix,
+    [Parameter(Mandatory=$true)]
+    [string]$BaseUsername,
+    [Parameter(Mandatory=$true)]
+    [string]$GivenName,
+    [Parameter(Mandatory=$true)]
+    [string]$Initial,
+    [Parameter(Mandatory=$true)]
+    [string]$Surname
 )
 
 # Modules
@@ -11,15 +19,17 @@ Import-Module -Name ActiveDirectory
 Import-Module -Name DnsServer
 
 # Variables
-$DAPassword = Read-Host -Prompt "Enter domain admin account password" -AsSecureString
-$SAPassword = Read-Host -Prompt "Enter server admin account password" -AsSecureString
+$DAPassword = Read-Host -Prompt "Enter domain admin account password"      -AsSecureString
+$SAPassword = Read-Host -Prompt "Enter server admin account password"      -AsSecureString
 $WAPassword = Read-Host -Prompt "Enter workstation admin account password" -AsSecureString
-$Password   = Read-Host -Prompt "Enter user account password" -AsSecureString
+$Password   = Read-Host -Prompt "Enter user account password"              -AsSecureString
 
 $DomainDistinguishedName = (Get-ADDomain).DistinguishedName
 $DomainName              = (Get-ADDomain).Name
 $DomainNetBIOSName       = (Get-ADDomain).NetBIOSName
 $RootOUDistinguishedName = "OU=$($DomainNetBIOSName),$($DomainDistinguishedName)"
+
+$CMServerName = "$($DomainNetBIOSName)CM01"
 
 # Create DNS reverse lookup zone
 Add-DnsServerPrimaryZone -NetworkID $ReverseZoneNetworkId -ReplicationScope Domain
@@ -99,17 +109,17 @@ Add-ADGroupMember -Identity "LocalAdmin_Servers"      -Members (Get-ADGroup -Ide
 Add-ADGroupMember -Identity "LocalAdmin_Workstations" -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
 
 # Create user accounts
-New-ADUser -Name "ajf-da" -SamAccountName "ajf-da" -GivenName "Anthony" -Initials "J" -Surname "Fontanez" -DisplayName "Anthony J. Fontanez (DA)" -Path "OU=T0,$DomainDistinguishedName"                   -UserPrincipalName "ajf-da@$DomainName"           -AccountPassword $DAPassword -PasswordNeverExpires $true -Enabled $true
-New-ADUser -Name "ajf-sa" -SamAccountName "ajf-sa" -GivenName "Anthony" -Initials "J" -Surname "Fontanez" -DisplayName "Anthony J. Fontanez (SA)" -Path "OU=Administrators,$RootOUDistinguishedName" -UserPrincipalName "ajf-sa@$DomainName"           -AccountPassword $SAPassword -PasswordNeverExpires $true -Enabled $true
-New-ADUser -Name "ajf-wa" -SamAccountName "ajf-wa" -GivenName "Anthony" -Initials "J" -Surname "Fontanez" -DisplayName "Anthony J. Fontanez (WA)" -Path "OU=Users,$RootOUDistinguishedName"          -UserPrincipalName "ajf-wa@$AlternativeUpnSuffix" -AccountPassword $WAPassword -PasswordNeverExpires $true -Enabled $true
-New-ADUser -Name "ajf"    -SamAccountName "ajf"    -GivenName "Anthony" -Initials "J" -Surname "Fontanez" -DisplayName "Anthony J. Fontanez"      -Path "OU=Users,$RootOUDistinguishedName"          -UserPrincipalName "ajf@$AlternativeUpnSuffix"    -AccountPassword $Password   -PasswordNeverExpires $true -Enabled $true
+New-ADUser -Name "$($BaseUsername)-da" -SamAccountName "$($BaseUsername)-da" -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname (DA)" -Path "OU=T0,$DomainDistinguishedName"             -UserPrincipalName "$($BaseUsername)-da@$($DomainName)"           -AccountPassword $DAPassword -PasswordNeverExpires $true -Enabled $true
+New-ADUser -Name "$($BaseUsername)-sa" -SamAccountName "$($BaseUsername)-sa" -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname (SA)" -Path "OU=Administrators,$RootOUDistinguishedName" -UserPrincipalName "$($BaseUsername)-sa@$($DomainName)"           -AccountPassword $SAPassword -PasswordNeverExpires $true -Enabled $true
+New-ADUser -Name "$($BaseUsername)-wa" -SamAccountName "$($BaseUsername)-wa" -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname (WA)" -Path "OU=Users,$RootOUDistinguishedName"          -UserPrincipalName "$($BaseUsername)-wa@$($AlternativeUpnSuffix)" -AccountPassword $WAPassword -PasswordNeverExpires $true -Enabled $true
+New-ADUser -Name $BaseUsername         -SamAccountName $BaseUsername         -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname"      -Path "OU=Users,$RootOUDistinguishedName"          -UserPrincipalName "$($BaseUsername)@$($AlternativeUpnSuffix)"    -AccountPassword $Password   -PasswordNeverExpires $true -Enabled $true
 
 # Add users to necessary groups
-Add-ADGroupMember -Identity "Domain Admins"             -Members (Get-ADUser -Identity "ajf-da")
-Add-ADGroupMember -Identity "Enterprise Admins"         -Members (Get-ADUser -Identity "ajf-da")
-Add-ADGroupMember -Identity "Schema Admins"             -Members (Get-ADUser -Identity "ajf-da")
-Add-ADGroupMember -Identity "RBAC_InfrastructureAdmins" -Members (Get-ADUser -Identity "ajf-sa")
-Add-ADGroupMember -Identity "RBAC_WorkstationAdmins"    -Members (Get-ADUser -Identity "ajf-wa")
+Add-ADGroupMember -Identity "Domain Admins"             -Members (Get-ADUser -Identity "$($BaseUsername)-da")
+Add-ADGroupMember -Identity "Enterprise Admins"         -Members (Get-ADUser -Identity "$($BaseUsername)-da")
+Add-ADGroupMember -Identity "Schema Admins"             -Members (Get-ADUser -Identity "$($BaseUsername)-da")
+Add-ADGroupMember -Identity "RBAC_InfrastructureAdmins" -Members (Get-ADUser -Identity "$($BaseUsername)-sa")
+Add-ADGroupMember -Identity "RBAC_WorkstationAdmins"    -Members (Get-ADUser -Identity "$($BaseUsername)-wa")
 
 # Create KDS root key
 Add-KdsRootKey -EffectiveTime ((Get-Date).AddHours((-10)))
@@ -130,18 +140,18 @@ redirusr.exe "OU=Users,$RootOUDistinguishedName" | Out-Null
 #Create ConfigMgr objects
 New-ADOrganizationalUnit -Name "CM" -Path "OU=Servers,$RootOUDistinguishedName" -Description "ConfigMgr"
 
-New-ADComputer -Name "$($DomainNetBIOSName)CM01" -Path "OU=CM,OU=Servers,$RootOUDistinguishedName"
+New-ADComputer -Name $CMServerName -Path "OU=CM,OU=Servers,$RootOUDistinguishedName"
 
 New-ADGroup -Name "CM_Servers"    -GroupCategory Security -GroupScope Universal   -Path "OU=CM,OU=Servers,$RootOUDistinguishedName"
 New-ADGroup -Name "CM_Admins"     -GroupCategory Security -GroupScope DomainLocal -Path "OU=CM,OU=Servers,$RootOUDistinguishedName"
 New-ADGroup -Name "CM_SQL_Admins" -GroupCategory Security -GroupScope DomainLocal -Path "OU=CM,OU=Servers,$RootOUDistinguishedName"
 
-Add-ADGroupMember -Identity "CM_Servers"    -Members (Get-ADComputer -Identity "$($DomainNetBIOSName)CM01")
+Add-ADGroupMember -Identity "CM_Servers"    -Members (Get-ADComputer -Identity $CMServerName)
 Add-ADGroupMember -Identity "CM_Admins"     -Members (Get-ADGroup    -Identity "CM_Servers")
 Add-ADGroupMember -Identity "CM_Admins"     -Members (Get-ADGroup    -Identity "RBAC_InfrastructureAdmins")
 Add-ADGroupMember -Identity "CM_SQL_Admins" -Members (Get-ADGroup    -Identity "CM_Admins")
 
-New-ADServiceAccount -Name "svc_CM_SQL" -SamAccountName "svc_CM_SQL" -DNSHostName "$($DomainNetBIOSName)CM01.$($DomainName)" -KerberosEncryptionType AES128,AES256 -Path "OU=CM,OU=Servers,$RootOUDistinguishedName" -PrincipalsAllowedToRetrieveManagedPassword (Get-ADGroup -Identity "CM_Servers")
+New-ADServiceAccount -Name "svc_CM_SQL" -SamAccountName "svc_CM_SQL" -DNSHostName "$($CMServerName).$($DomainName)" -KerberosEncryptionType AES128,AES256 -Path "OU=CM,OU=Servers,$RootOUDistinguishedName" -PrincipalsAllowedToRetrieveManagedPassword (Get-ADGroup -Identity "CM_Servers")
 
 New-ADObject -Name "System Management" -Type Container -Path "CN=System,$($DomainDistinguishedName)"
 
@@ -213,15 +223,15 @@ foreach ($GPOName in $GPONames) {
 
 # Link GPOs
 New-GPLink -Name $DomainName                             -Target $DomainDistinguishedName                            -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
-New-GPLink -Name "All - Default Security Policy"         -Target $RootOUDistinguishedName                      -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
-New-GPLink -Name "Autopilot - Default Security Policy"   -Target "OU=Autopilot,$RootOUDistinguishedName"       -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
+New-GPLink -Name "All - Default Security Policy"         -Target $RootOUDistinguishedName                            -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
+New-GPLink -Name "Autopilot - Default Security Policy"   -Target "OU=Autopilot,$RootOUDistinguishedName"             -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
 New-GPLink -Name "DC - Default Security Policy"          -Target "OU=Domain Controllers,$($DomainDistinguishedName)" -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
-New-GPLink -Name "Kiosk - Default Security Policy"       -Target "OU=Kiosks,$RootOUDistinguishedName"          -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
-New-GPLink -Name "Workstation - Default Security Policy" -Target "OU=Autopilot,$RootOUDistinguishedName"       -LinkEnabled Yes -Enforced No -Order 2 | Out-Null
-New-GPLink -Name "Workstation - Default Security Policy" -Target "OU=Kiosks,$RootOUDistinguishedName"          -LinkEnabled Yes -Enforced No -Order 2 | Out-Null
-New-GPLink -Name "Workstation - Default Security Policy" -Target "OU=Staging,$RootOUDistinguishedName"         -LinkEnabled Yes -Enforced No -Order 2 | Out-Null
-New-GPLink -Name "Workstation - Default Security Policy" -Target "OU=Workstations,$RootOUDistinguishedName"    -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
-New-GPLink -Name "Server - ConfigMgr"                    -Target "OU=CM,OU=Servers,$RootOUDistinguishedName"   -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
-New-GPLink -Name "Server - Default Security Policy"      -Target "OU=Servers,$RootOUDistinguishedName"         -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
-New-GPLink -Name "Staging - Default Security Policy"     -Target "OU=Staging,$RootOUDistinguishedName"         -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
-New-GPLink -Name "User - Default Security Policy"        -Target "OU=Users,$RootOUDistinguishedName"           -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
+New-GPLink -Name "Kiosk - Default Security Policy"       -Target "OU=Kiosks,$RootOUDistinguishedName"                -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
+New-GPLink -Name "Workstation - Default Security Policy" -Target "OU=Autopilot,$RootOUDistinguishedName"             -LinkEnabled Yes -Enforced No -Order 2 | Out-Null
+New-GPLink -Name "Workstation - Default Security Policy" -Target "OU=Kiosks,$RootOUDistinguishedName"                -LinkEnabled Yes -Enforced No -Order 2 | Out-Null
+New-GPLink -Name "Workstation - Default Security Policy" -Target "OU=Staging,$RootOUDistinguishedName"               -LinkEnabled Yes -Enforced No -Order 2 | Out-Null
+New-GPLink -Name "Workstation - Default Security Policy" -Target "OU=Workstations,$RootOUDistinguishedName"          -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
+New-GPLink -Name "Server - ConfigMgr"                    -Target "OU=CM,OU=Servers,$RootOUDistinguishedName"         -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
+New-GPLink -Name "Server - Default Security Policy"      -Target "OU=Servers,$RootOUDistinguishedName"               -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
+New-GPLink -Name "Staging - Default Security Policy"     -Target "OU=Staging,$RootOUDistinguishedName"               -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
+New-GPLink -Name "User - Default Security Policy"        -Target "OU=Users,$RootOUDistinguishedName"                 -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
