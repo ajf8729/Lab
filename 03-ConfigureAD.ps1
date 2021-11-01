@@ -19,10 +19,10 @@ Import-Module -Name ActiveDirectory
 Import-Module -Name DnsServer
 
 # Variables
-$DAPassword = Read-Host -Prompt "Enter domain admin account password"      -AsSecureString
-$SAPassword = Read-Host -Prompt "Enter server admin account password"      -AsSecureString
-$WAPassword = Read-Host -Prompt "Enter workstation admin account password" -AsSecureString
-$Password   = Read-Host -Prompt "Enter user account password"              -AsSecureString
+$T0Password = Read-Host -AsSecureString -Prompt "Enter domain admin account password"
+$T1Password = Read-Host -AsSecureString -Prompt "Enter server admin account password"
+$T2Password = Read-Host -AsSecureString -Prompt "Enter workstation admin account password"
+$T3Password = Read-Host -AsSecureString -Prompt "Enter user account password"
 
 $DomainDistinguishedName = (Get-ADDomain).DistinguishedName
 $DomainName              = (Get-ADDomain).DNSRoot
@@ -61,7 +61,7 @@ foreach ($OU in $OUs) {
 # Create RBAC groups
 New-ADGroup -Name "RBAC_InfrastructureAdmins" -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$RootOUDistinguishedName"
 New-ADGroup -Name "RBAC_ServerAdmins"         -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$RootOUDistinguishedName"
-New-ADGroup -Name "RBAC_WorkstationAdmins"    -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$RootOUDistinguishedName"
+$RBAC_WorkstationAdmins = New-ADGroup -Name "RBAC_WorkstationAdmins"    -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$RootOUDistinguishedName"
 
 # Create local admin groups
 New-ADGroup -Name "LocalAdmin_Servers"      -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$RootOUDistinguishedName"
@@ -109,23 +109,23 @@ Add-ADGroupMember -Identity "LocalAdmin_Servers"      -Members (Get-ADGroup -Ide
 Add-ADGroupMember -Identity "LocalAdmin_Workstations" -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
 
 # Create user accounts
-New-ADUser -Name "$($BaseUsername)-da" -SamAccountName "$($BaseUsername)-da" -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname (DA)" -Path "OU=T0,$DomainDistinguishedName"             -UserPrincipalName "$($BaseUsername)-da@$($DomainName)"           -AccountPassword $DAPassword -PasswordNeverExpires $true -Enabled $true
-New-ADUser -Name "$($BaseUsername)-sa" -SamAccountName "$($BaseUsername)-sa" -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname (SA)" -Path "OU=Administrators,$RootOUDistinguishedName" -UserPrincipalName "$($BaseUsername)-sa@$($DomainName)"           -AccountPassword $SAPassword -PasswordNeverExpires $true -Enabled $true
-New-ADUser -Name "$($BaseUsername)-wa" -SamAccountName "$($BaseUsername)-wa" -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname (WA)" -Path "OU=Users,$RootOUDistinguishedName"          -UserPrincipalName "$($BaseUsername)-wa@$($AlternativeUpnSuffix)" -AccountPassword $WAPassword -PasswordNeverExpires $true -Enabled $true
-New-ADUser -Name $BaseUsername         -SamAccountName $BaseUsername         -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname"      -Path "OU=Users,$RootOUDistinguishedName"          -UserPrincipalName "$($BaseUsername)@$($AlternativeUpnSuffix)"    -AccountPassword $Password   -PasswordNeverExpires $true -Enabled $true
+$T0 = New-ADUser -Name "$($BaseUsername)-da" -SamAccountName "$($BaseUsername)-da" -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname (DA)" -Path "OU=T0,$DomainDistinguishedName"             -UserPrincipalName "$($BaseUsername)-da@$($DomainName)"           -AccountPassword $T0Password -PasswordNeverExpires $true -Enabled $true
+$T1 = New-ADUser -Name "$($BaseUsername)-sa" -SamAccountName "$($BaseUsername)-sa" -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname (SA)" -Path "OU=Administrators,$RootOUDistinguishedName" -UserPrincipalName "$($BaseUsername)-sa@$($DomainName)"           -AccountPassword $T1Password -PasswordNeverExpires $true -Enabled $true
+$T2 = New-ADUser -Name "$($BaseUsername)-wa" -SamAccountName "$($BaseUsername)-wa" -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname (WA)" -Path "OU=Users,$RootOUDistinguishedName"          -UserPrincipalName "$($BaseUsername)-wa@$($AlternativeUpnSuffix)" -AccountPassword $T2Password -PasswordNeverExpires $true -Enabled $true
+$T3 = New-ADUser -Name $BaseUsername         -SamAccountName $BaseUsername         -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname"      -Path "OU=Users,$RootOUDistinguishedName"          -UserPrincipalName "$($BaseUsername)@$($AlternativeUpnSuffix)"    -AccountPassword $T3Password -PasswordNeverExpires $true -Enabled $true
 
 # Add users to necessary groups
-Add-ADGroupMember -Identity "Domain Admins"             -Members (Get-ADUser -Identity "$($BaseUsername)-da")
-Add-ADGroupMember -Identity "Enterprise Admins"         -Members (Get-ADUser -Identity "$($BaseUsername)-da")
-Add-ADGroupMember -Identity "Schema Admins"             -Members (Get-ADUser -Identity "$($BaseUsername)-da")
-Add-ADGroupMember -Identity "RBAC_InfrastructureAdmins" -Members (Get-ADUser -Identity "$($BaseUsername)-sa")
-Add-ADGroupMember -Identity "RBAC_WorkstationAdmins"    -Members (Get-ADUser -Identity "$($BaseUsername)-wa")
+Add-ADGroupMember -Identity "Domain Admins"             -Members $T0
+Add-ADGroupMember -Identity "Enterprise Admins"         -Members $T0
+Add-ADGroupMember -Identity "Schema Admins"             -Members $T0
+Add-ADGroupMember -Identity "RBAC_InfrastructureAdmins" -Members $T1
+Add-ADGroupMember -Identity "RBAC_WorkstationAdmins"    -Members $T2
 
 # Create KDS root key
 Add-KdsRootKey -EffectiveTime ((Get-Date).AddHours((-10)))
 
 # Rename default AD site
-Get-ADObject -SearchBase (Get-ADRootDSE).ConfigurationNamingContext -Filter "objectClass -eq 'site' -and name -eq 'Default-First-Site-Name'" | Rename-ADObject -NewName $DomainNetBIOSName
+Get-ADObject -SearchBase ((Get-ADRootDSE).ConfigurationNamingContext) -Filter "objectClass -eq 'site' -and name -eq 'Default-First-Site-Name'" | Rename-ADObject -NewName $DomainNetBIOSName
 
 # Create AD subnet
 New-ADReplicationSubnet -Name $ReverseZoneNetworkId -Site $DomainNetBIOSName
@@ -140,24 +140,24 @@ redirusr.exe "OU=Users,$RootOUDistinguishedName"
 #Create ConfigMgr objects
 New-ADOrganizationalUnit -Name "CM" -Path "OU=Servers,$RootOUDistinguishedName" -Description "ConfigMgr"
 
-New-ADComputer -Name $CMServerName -Path "OU=CM,OU=Servers,$RootOUDistinguishedName"
+$CMComputer = New-ADComputer -Name $CMServerName -Path "OU=CM,OU=Servers,$RootOUDistinguishedName"
 
-New-ADGroup -Name "CM_Servers"    -GroupCategory Security -GroupScope Universal   -Path "OU=CM,OU=Servers,$RootOUDistinguishedName"
-New-ADGroup -Name "CM_Admins"     -GroupCategory Security -GroupScope DomainLocal -Path "OU=CM,OU=Servers,$RootOUDistinguishedName"
+$CM_Servers = New-ADGroup -Name "CM_Servers" -GroupCategory Security -GroupScope Universal   -Path "OU=CM,OU=Servers,$RootOUDistinguishedName"
+$CM_Admins  = New-ADGroup -Name "CM_Admins"  -GroupCategory Security -GroupScope DomainLocal -Path "OU=CM,OU=Servers,$RootOUDistinguishedName"
+
 New-ADGroup -Name "CM_SQL_Admins" -GroupCategory Security -GroupScope DomainLocal -Path "OU=CM,OU=Servers,$RootOUDistinguishedName"
 
-Add-ADGroupMember -Identity "CM_Servers"    -Members (Get-ADComputer -Identity $CMServerName)
-Add-ADGroupMember -Identity "CM_Admins"     -Members (Get-ADGroup    -Identity "CM_Servers")
-Add-ADGroupMember -Identity "CM_Admins"     -Members (Get-ADGroup    -Identity "RBAC_InfrastructureAdmins")
-Add-ADGroupMember -Identity "CM_SQL_Admins" -Members (Get-ADGroup    -Identity "CM_Admins")
+Add-ADGroupMember -Identity "CM_Servers"    -Members $CMComputer
+Add-ADGroupMember -Identity "CM_Admins"     -Members $CM_Servers
+Add-ADGroupMember -Identity "CM_Admins"     -Members $RBAC_WorkstationAdmins
+Add-ADGroupMember -Identity "CM_SQL_Admins" -Members $CM_Admins
 
 New-ADServiceAccount -Name "svc_CM_SQL" -SamAccountName "svc_CM_SQL" -DNSHostName "$($CMServerName).$($DomainName)" -KerberosEncryptionType AES128,AES256 -Path "OU=CM,OU=Servers,$RootOUDistinguishedName" -PrincipalsAllowedToRetrieveManagedPassword (Get-ADGroup -Identity "CM_Servers")
 
 New-ADObject -Name "System Management" -Type Container -Path "CN=System,$($DomainDistinguishedName)"
 
 $CN = "AD:\CN=System Management,CN=System,$($DomainDistinguishedName)"
-$Group = Get-ADGroup -Identity "CM_Admins"
-$SID = New-Object -TypeName System.Security.Principal.SecurityIdentifier $Group.SID
+$SID = New-Object -TypeName System.Security.Principal.SecurityIdentifier $CM_Admins.SID
 $ACL = Get-Acl -Path $CN
 $ACE = New-Object -TypeName System.DirectoryServices.ActiveDirectoryAccessRule $SID,"GenericAll","Allow",1
 $ACL.AddAccessRule($ACE)
