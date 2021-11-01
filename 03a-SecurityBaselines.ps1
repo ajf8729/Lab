@@ -1,3 +1,7 @@
+[CmdletBinding()]
+Param(
+)
+
 # Modules
 
 Import-Module -Name ActiveDirectory
