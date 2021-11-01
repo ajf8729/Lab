@@ -26,7 +26,7 @@ Invoke-WebRequest -UseBasicParsing -Uri "$($BaseURL)/Microsoft%20Edge%20v95%20Se
 # Extract baselines
 
 (Get-ChildItem -Path "$env:TEMP\baselinetemp\*.zip").Name | ForEach-Object {
-    Expand-Archive -Path $env:TEMP\baselinetemp\$_ -DestinationPath .
+    Expand-Archive -Path $_ -DestinationPath $env:TEMP\baselinetemp
 }
 
 # Import baselines
