@@ -222,16 +222,16 @@ foreach ($GPOName in $GPONames) {
 }
 
 # Link GPOs
-New-GPLink -Name $DomainName                             -Target $DomainDistinguishedName                            -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
-New-GPLink -Name "All - Default Security Policy"         -Target $RootOUDistinguishedName                            -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
-New-GPLink -Name "Autopilot - Default Security Policy"   -Target "OU=Autopilot,$RootOUDistinguishedName"             -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
-New-GPLink -Name "DC - Default Security Policy"          -Target "OU=Domain Controllers,$($DomainDistinguishedName)" -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
-New-GPLink -Name "Kiosk - Default Security Policy"       -Target "OU=Kiosks,$RootOUDistinguishedName"                -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
-New-GPLink -Name "Workstation - Default Security Policy" -Target "OU=Autopilot,$RootOUDistinguishedName"             -LinkEnabled Yes -Enforced No -Order 2 | Out-Null
-New-GPLink -Name "Workstation - Default Security Policy" -Target "OU=Kiosks,$RootOUDistinguishedName"                -LinkEnabled Yes -Enforced No -Order 2 | Out-Null
-New-GPLink -Name "Workstation - Default Security Policy" -Target "OU=Staging,$RootOUDistinguishedName"               -LinkEnabled Yes -Enforced No -Order 2 | Out-Null
-New-GPLink -Name "Workstation - Default Security Policy" -Target "OU=Workstations,$RootOUDistinguishedName"          -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
-New-GPLink -Name "Server - ConfigMgr"                    -Target "OU=CM,OU=Servers,$RootOUDistinguishedName"         -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
-New-GPLink -Name "Server - Default Security Policy"      -Target "OU=Servers,$RootOUDistinguishedName"               -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
-New-GPLink -Name "Staging - Default Security Policy"     -Target "OU=Staging,$RootOUDistinguishedName"               -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
-New-GPLink -Name "User - Default Security Policy"        -Target "OU=Users,$RootOUDistinguishedName"                 -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
+New-GPLink -Name $DomainName                             -Target $DomainDistinguishedName                         -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
+New-GPLink -Name "DC - Default Security Policy"          -Target "OU=Domain Controllers,$DomainDistinguishedName" -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
+New-GPLink -Name "All - Default Security Policy"         -Target $RootOUDistinguishedName                         -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
+New-GPLink -Name "Autopilot - Default Security Policy"   -Target "OU=Autopilot,$RootOUDistinguishedName"          -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
+New-GPLink -Name "Workstation - Default Security Policy" -Target "OU=Autopilot,$RootOUDistinguishedName"          -LinkEnabled Yes -Enforced No -Order 2 | Out-Null
+New-GPLink -Name "Kiosk - Default Security Policy"       -Target "OU=Kiosks,$RootOUDistinguishedName"             -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
+New-GPLink -Name "Workstation - Default Security Policy" -Target "OU=Kiosks,$RootOUDistinguishedName"             -LinkEnabled Yes -Enforced No -Order 2 | Out-Null
+New-GPLink -Name "Server - Default Security Policy"      -Target "OU=Servers,$RootOUDistinguishedName"            -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
+New-GPLink -Name "Server - ConfigMgr"                    -Target "OU=CM,OU=Servers,$RootOUDistinguishedName"      -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
+New-GPLink -Name "Staging - Default Security Policy"     -Target "OU=Staging,$RootOUDistinguishedName"            -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
+New-GPLink -Name "Workstation - Default Security Policy" -Target "OU=Staging,$RootOUDistinguishedName"            -LinkEnabled Yes -Enforced No -Order 2 | Out-Null
+New-GPLink -Name "User - Default Security Policy"        -Target "OU=Users,$RootOUDistinguishedName"              -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
+New-GPLink -Name "Workstation - Default Security Policy" -Target "OU=Workstations,$RootOUDistinguishedName"       -LinkEnabled Yes -Enforced No -Order 1 | Out-Null
