@@ -59,16 +59,16 @@ foreach ($OU in $OUs) {
 }
 
 # Create RBAC groups
-$RBAC_InfrastructureAdmins = New-ADGroup -Name "RBAC_InfrastructureAdmins" -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$RootOUDistinguishedName"
-$RBAC_ServerAdmins = New-ADGroup -Name "RBAC_ServerAdmins"         -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$RootOUDistinguishedName"
-$RBAC_WorkstationAdmins = New-ADGroup -Name "RBAC_WorkstationAdmins"    -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$RootOUDistinguishedName"
+$RBAC_InfrastructureAdmins = New-ADGroup -Name "RBAC_InfrastructureAdmins" -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$RootOUDistinguishedName" -PassThru
+$RBAC_ServerAdmins         = New-ADGroup -Name "RBAC_ServerAdmins"         -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$RootOUDistinguishedName" -PassThru
+$RBAC_WorkstationAdmins    = New-ADGroup -Name "RBAC_WorkstationAdmins"    -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$RootOUDistinguishedName" -PassThru
 
 # Create local admin groups
 New-ADGroup -Name "LocalAdmin_Servers"      -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$RootOUDistinguishedName"
 New-ADGroup -Name "LocalAdmin_Workstations" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$RootOUDistinguishedName"
 
 # Create root OU admin group
-$RootOUAdminGroup = New-ADGroup -Name "OUAdmin_$($DomainNetBIOSName)" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$RootOUDistinguishedName"
+$RootOUAdminGroup = New-ADGroup -Name "OUAdmin_$($DomainNetBIOSName)" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$RootOUDistinguishedName" -PassThru
 
 # Create subOU admin groups
 foreach ($OU in $OUs) {
@@ -108,9 +108,9 @@ Add-ADGroupMember -Identity "LocalAdmin_Servers"      -Members $RBAC_ServerAdmin
 Add-ADGroupMember -Identity "LocalAdmin_Workstations" -Members $RBAC_WorkstationAdmins
 
 # Create user accounts
-$T0 = New-ADUser -Name "$($BaseUsername)-da" -SamAccountName "$($BaseUsername)-da" -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname (DA)" -Path "OU=T0,$DomainDistinguishedName"             -UserPrincipalName "$($BaseUsername)-da@$($DomainName)"           -AccountPassword $T0Password -PasswordNeverExpires $true -Enabled $true
-$T1 = New-ADUser -Name "$($BaseUsername)-sa" -SamAccountName "$($BaseUsername)-sa" -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname (SA)" -Path "OU=Administrators,$RootOUDistinguishedName" -UserPrincipalName "$($BaseUsername)-sa@$($DomainName)"           -AccountPassword $T1Password -PasswordNeverExpires $true -Enabled $true
-$T2 = New-ADUser -Name "$($BaseUsername)-wa" -SamAccountName "$($BaseUsername)-wa" -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname (WA)" -Path "OU=Users,$RootOUDistinguishedName"          -UserPrincipalName "$($BaseUsername)-wa@$($AlternativeUpnSuffix)" -AccountPassword $T2Password -PasswordNeverExpires $true -Enabled $true
+$T0 = New-ADUser -Name "$($BaseUsername)-da" -SamAccountName "$($BaseUsername)-da" -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname (DA)" -Path "OU=T0,$DomainDistinguishedName"             -UserPrincipalName "$($BaseUsername)-da@$($DomainName)"           -AccountPassword $T0Password -PasswordNeverExpires $true -Enabled $true  -PassThru
+$T1 = New-ADUser -Name "$($BaseUsername)-sa" -SamAccountName "$($BaseUsername)-sa" -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname (SA)" -Path "OU=Administrators,$RootOUDistinguishedName" -UserPrincipalName "$($BaseUsername)-sa@$($DomainName)"           -AccountPassword $T1Password -PasswordNeverExpires $true -Enabled $true  -PassThru
+$T2 = New-ADUser -Name "$($BaseUsername)-wa" -SamAccountName "$($BaseUsername)-wa" -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname (WA)" -Path "OU=Users,$RootOUDistinguishedName"          -UserPrincipalName "$($BaseUsername)-wa@$($AlternativeUpnSuffix)" -AccountPassword $T2Password -PasswordNeverExpires $true -Enabled $true  -PassThru
 
 New-ADUser -Name $BaseUsername -SamAccountName $BaseUsername -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname" -Path "OU=Users,$RootOUDistinguishedName" -UserPrincipalName "$($BaseUsername)@$($AlternativeUpnSuffix)" -AccountPassword $T3Password -PasswordNeverExpires $true -Enabled $true
 
@@ -140,10 +140,10 @@ redirusr.exe "OU=Users,$RootOUDistinguishedName"
 #Create ConfigMgr objects
 New-ADOrganizationalUnit -Name "CM" -Path "OU=Servers,$RootOUDistinguishedName" -Description "ConfigMgr"
 
-$CMComputer = New-ADComputer -Name $CMServerName -Path "OU=CM,OU=Servers,$RootOUDistinguishedName"
+$CMComputer = New-ADComputer -Name $CMServerName -Path "OU=CM,OU=Servers,$RootOUDistinguishedName" -PassThru
 
-$CM_Servers = New-ADGroup -Name "CM_Servers" -GroupCategory Security -GroupScope Universal   -Path "OU=CM,OU=Servers,$RootOUDistinguishedName"
-$CM_Admins  = New-ADGroup -Name "CM_Admins"  -GroupCategory Security -GroupScope DomainLocal -Path "OU=CM,OU=Servers,$RootOUDistinguishedName"
+$CM_Servers = New-ADGroup -Name "CM_Servers" -GroupCategory Security -GroupScope Universal   -Path "OU=CM,OU=Servers,$RootOUDistinguishedName" -PassThru
+$CM_Admins  = New-ADGroup -Name "CM_Admins"  -GroupCategory Security -GroupScope DomainLocal -Path "OU=CM,OU=Servers,$RootOUDistinguishedName" -PassThru
 
 New-ADGroup -Name "CM_SQL_Admins" -GroupCategory Security -GroupScope DomainLocal -Path "OU=CM,OU=Servers,$RootOUDistinguishedName"
 
