@@ -25,7 +25,7 @@ $WAPassword = Read-Host -Prompt "Enter workstation admin account password" -AsSe
 $Password   = Read-Host -Prompt "Enter user account password"              -AsSecureString
 
 $DomainDistinguishedName = (Get-ADDomain).DistinguishedName
-$DomainName              = (Get-ADDomain).Name
+$DomainName              = (Get-ADDomain).DNSRoot
 $DomainNetBIOSName       = (Get-ADDomain).NetBIOSName
 $RootOUDistinguishedName = "OU=$($DomainNetBIOSName),$($DomainDistinguishedName)"
 
