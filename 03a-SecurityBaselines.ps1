@@ -34,8 +34,10 @@ Invoke-WebRequest -UseBasicParsing -Uri "$($BaseURL)/Microsoft%20Edge%20v95%20Se
 # Copy templates to central store
 
 (Get-ChildItem -Path $env:TEMP\baselinetemp -Directory).Name | ForEach-Object {
-    Set-Location -Path $env:TEMP\baselinetemp\$_\Templates\
-    Copy-Item -Path "*" -Destination "C:\Windows\SYSVOL\domain\Policies\PolicyDefinitions\" -Recurse -Force
+    if (Test-Path -Path $env:TEMP\baselinetemp\$_\Templates\) {
+        Set-Location -Path $env:TEMP\baselinetemp\$_\Templates\
+        Copy-Item -Path "*" -Destination "C:\Windows\SYSVOL\domain\Policies\PolicyDefinitions\" -Recurse -Force
+    }
 }
 
 # Import baselines
