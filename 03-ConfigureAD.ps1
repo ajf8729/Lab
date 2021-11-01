@@ -59,20 +59,20 @@ foreach ($OU in $OUs) {
 }
 
 # Create RBAC groups
-New-ADGroup -Name "RBAC_InfrastructureAdmins" -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$DomainDistinguishedName"
-New-ADGroup -Name "RBAC_ServerAdmins" -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$DomainDistinguishedName"
-New-ADGroup -Name "RBAC_WorkstationAdmins" -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$DomainDistinguishedName"
+New-ADGroup -Name "RBAC_InfrastructureAdmins" -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$RootOUDistinguishedName"
+New-ADGroup -Name "RBAC_ServerAdmins"         -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$RootOUDistinguishedName"
+New-ADGroup -Name "RBAC_WorkstationAdmins"    -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$RootOUDistinguishedName"
 
 # Create local admin groups
-New-ADGroup -Name "LocalAdmin_Servers" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$DomainDistinguishedName"
-New-ADGroup -Name "LocalAdmin_Workstations" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$DomainDistinguishedName"
+New-ADGroup -Name "LocalAdmin_Servers"      -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$RootOUDistinguishedName"
+New-ADGroup -Name "LocalAdmin_Workstations" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$RootOUDistinguishedName"
 
 # Create root OU admin group
-New-ADGroup -Name "OUAdmin_$($DomainNetBIOSName)" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$DomainDistinguishedName"
+New-ADGroup -Name "OUAdmin_$($DomainNetBIOSName)" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$RootOUDistinguishedName"
 
 # Create subOU admin groups
 foreach ($OU in $OUs) {
-    New-ADGroup -Name "OUAdmin_$($DomainNetBIOSName)_$($OU)" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$DomainDistinguishedName"
+    New-ADGroup -Name "OUAdmin_$($DomainNetBIOSName)_$($OU)" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$RootOUDistinguishedName"
 }
 
 # Delegate root OU permissions
@@ -86,7 +86,7 @@ Set-Acl -Path $OU -AclObject $ACL
 
 # Delegate subOU permissions
 foreach ($OU in $OUs) {
-    $subOU = "AD:\OU=$($OU),OU=$($DomainNetBIOSName),$($DomainDistinguishedName)"
+    $subOU = "AD:\OU=$($OU),$($RootOUDistinguishedName)"
     $Group = Get-ADGroup -Identity "OUAdmin_$($DomainNetBIOSName)_$($OU)"
     $SID = New-Object -TypeName System.Security.Principal.SecurityIdentifier $Group.SID
     $ACL = Get-Acl -Path $subOU
