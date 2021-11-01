@@ -39,7 +39,7 @@ Set-ADForest -Identity ((Get-ADForest).Name) -UPNSuffixes @{add="$AlternativeUpn
 
 # Create root OUs
 New-ADOrganizationalUnit -Name $DomainNetBIOSName -Path $DomainDistinguishedName -Description "$DomainNetBIOSName Root OU"
-New-ADOrganizationalUnit -Name "T0" -Path $DomainDistinguishedName -Description "Tier 0 Objects"
+New-ADOrganizationalUnit -Name "T0"               -Path $DomainDistinguishedName -Description "Tier 0 Objects"
 
 # Create subOUs
 $OUs = (
