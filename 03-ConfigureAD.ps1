@@ -59,8 +59,8 @@ foreach ($OU in $OUs) {
 }
 
 # Create RBAC groups
-New-ADGroup -Name "RBAC_InfrastructureAdmins" -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$RootOUDistinguishedName"
-New-ADGroup -Name "RBAC_ServerAdmins"         -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$RootOUDistinguishedName"
+$RBAC_InfrastructureAdmins = New-ADGroup -Name "RBAC_InfrastructureAdmins" -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$RootOUDistinguishedName"
+$RBAC_ServerAdmins = New-ADGroup -Name "RBAC_ServerAdmins"         -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$RootOUDistinguishedName"
 $RBAC_WorkstationAdmins = New-ADGroup -Name "RBAC_WorkstationAdmins"    -GroupCategory Security -GroupScope Universal -Path "OU=Groups,$RootOUDistinguishedName"
 
 # Create local admin groups
@@ -68,7 +68,7 @@ New-ADGroup -Name "LocalAdmin_Servers"      -GroupCategory Security -GroupScope 
 New-ADGroup -Name "LocalAdmin_Workstations" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$RootOUDistinguishedName"
 
 # Create root OU admin group
-New-ADGroup -Name "OUAdmin_$($DomainNetBIOSName)" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$RootOUDistinguishedName"
+$RootOUAdminGroup = New-ADGroup -Name "OUAdmin_$($DomainNetBIOSName)" -GroupCategory Security -GroupScope DomainLocal -Path "OU=Groups,$RootOUDistinguishedName"
 
 # Create subOU admin groups
 foreach ($OU in $OUs) {
@@ -77,8 +77,7 @@ foreach ($OU in $OUs) {
 
 # Delegate root OU permissions
 $OU = "AD:\OU=$($DomainNetBIOSName),$($DomainDistinguishedName)"
-$Group = Get-ADGroup -Identity "OUAdmin_$($DomainNetBIOSName)"
-$SID = New-Object -TypeName System.Security.Principal.SecurityIdentifier $Group.SID
+$SID = New-Object -TypeName System.Security.Principal.SecurityIdentifier $RootOUAdminGroup.SID
 $ACL = Get-Acl -Path $OU
 $ACE = New-Object -TypeName System.DirectoryServices.ActiveDirectoryAccessRule $SID,"GenericAll","Allow",1
 $ACL.AddAccessRule($ACE)
@@ -96,23 +95,24 @@ foreach ($OU in $OUs) {
 }
 
 # Grant OU admin access
-Add-ADGroupMember -Identity "OUAdmin_$($DomainNetBIOSName)"              -Members (Get-ADGroup -Identity "RBAC_InfrastructureAdmins")
-Add-ADGroupMember -Identity "OUAdmin_$($DomainNetBIOSName)_Autopilot"    -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
-Add-ADGroupMember -Identity "OUAdmin_$($DomainNetBIOSName)_Kiosks"       -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
-Add-ADGroupMember -Identity "OUAdmin_$($DomainNetBIOSName)_Workstations" -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
-Add-ADGroupMember -Identity "OUAdmin_$($DomainNetBIOSName)_Servers"      -Members (Get-ADGroup -Identity "RBAC_ServerAdmins")
-Add-ADGroupMember -Identity "OUAdmin_$($DomainNetBIOSName)_Staging"      -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
+Add-ADGroupMember -Identity "OUAdmin_$($DomainNetBIOSName)"              -Members $RBAC_InfrastructureAdmins
+Add-ADGroupMember -Identity "OUAdmin_$($DomainNetBIOSName)_Autopilot"    -Members $RBAC_WorkstationAdmins
+Add-ADGroupMember -Identity "OUAdmin_$($DomainNetBIOSName)_Kiosks"       -Members $RBAC_WorkstationAdmins
+Add-ADGroupMember -Identity "OUAdmin_$($DomainNetBIOSName)_Workstations" -Members $RBAC_WorkstationAdmins
+Add-ADGroupMember -Identity "OUAdmin_$($DomainNetBIOSName)_Servers"      -Members $RBAC_ServerAdmins
+Add-ADGroupMember -Identity "OUAdmin_$($DomainNetBIOSName)_Staging"      -Members $RBAC_WorkstationAdmins
 
 # Grant local admin access
-Add-ADGroupMember -Identity "LocalAdmin_Servers"      -Members (Get-ADGroup -Identity "RBAC_InfrastructureAdmins")
-Add-ADGroupMember -Identity "LocalAdmin_Servers"      -Members (Get-ADGroup -Identity "RBAC_ServerAdmins")
-Add-ADGroupMember -Identity "LocalAdmin_Workstations" -Members (Get-ADGroup -Identity "RBAC_WorkstationAdmins")
+Add-ADGroupMember -Identity "LocalAdmin_Servers"      -Members $RBAC_InfrastructureAdmins
+Add-ADGroupMember -Identity "LocalAdmin_Servers"      -Members $RBAC_ServerAdmins
+Add-ADGroupMember -Identity "LocalAdmin_Workstations" -Members $RBAC_WorkstationAdmins
 
 # Create user accounts
 $T0 = New-ADUser -Name "$($BaseUsername)-da" -SamAccountName "$($BaseUsername)-da" -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname (DA)" -Path "OU=T0,$DomainDistinguishedName"             -UserPrincipalName "$($BaseUsername)-da@$($DomainName)"           -AccountPassword $T0Password -PasswordNeverExpires $true -Enabled $true
 $T1 = New-ADUser -Name "$($BaseUsername)-sa" -SamAccountName "$($BaseUsername)-sa" -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname (SA)" -Path "OU=Administrators,$RootOUDistinguishedName" -UserPrincipalName "$($BaseUsername)-sa@$($DomainName)"           -AccountPassword $T1Password -PasswordNeverExpires $true -Enabled $true
 $T2 = New-ADUser -Name "$($BaseUsername)-wa" -SamAccountName "$($BaseUsername)-wa" -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname (WA)" -Path "OU=Users,$RootOUDistinguishedName"          -UserPrincipalName "$($BaseUsername)-wa@$($AlternativeUpnSuffix)" -AccountPassword $T2Password -PasswordNeverExpires $true -Enabled $true
-$T3 = New-ADUser -Name $BaseUsername         -SamAccountName $BaseUsername         -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname"      -Path "OU=Users,$RootOUDistinguishedName"          -UserPrincipalName "$($BaseUsername)@$($AlternativeUpnSuffix)"    -AccountPassword $T3Password -PasswordNeverExpires $true -Enabled $true
+
+New-ADUser -Name $BaseUsername -SamAccountName $BaseUsername -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname" -Path "OU=Users,$RootOUDistinguishedName" -UserPrincipalName "$($BaseUsername)@$($AlternativeUpnSuffix)" -AccountPassword $T3Password -PasswordNeverExpires $true -Enabled $true
 
 # Add users to necessary groups
 Add-ADGroupMember -Identity "Domain Admins"             -Members $T0
