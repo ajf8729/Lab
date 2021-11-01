@@ -8,7 +8,7 @@ Param(
 
 $SafeModeAdministratorPassword = Read-Host -Prompt "Enter the safe mode administrator password" -AsSecureString
 
-Install-WindowsFeature -Name AD-Domain-Services,DNS -IncludeManagementTools | Out-Null
+Install-WindowsFeature -Name AD-Domain-Services,DNS -IncludeManagementTools
 
 Import-Module -Name ADDSDeployment
 
