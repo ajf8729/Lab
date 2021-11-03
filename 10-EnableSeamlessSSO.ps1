@@ -3,4 +3,4 @@ Import-Module -FullyQualifiedName "C:\Program Files\Microsoft Azure Active Direc
 New-AzureADSSOAuthenticationContext
 Enable-AzureADSSOForest
 
-Get-ADComputer -Identity AZUREADSSOACC | Move-ADObject -TargetPath "OU=T0,DC=lab,DC=ajf8729,DC=com"
+Get-ADComputer -Identity AZUREADSSOACC | Move-ADObject -TargetPath "OU=T0,DC=lab,DC=dev,DC=ajf8729,DC=com"
