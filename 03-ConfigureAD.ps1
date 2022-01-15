@@ -2,7 +2,7 @@
 Param(
     [Parameter(Mandatory=$true)]
     [string]$ReverseZoneNetworkId,
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$false)]
     [string]$AlternativeUpnSuffix,
     [Parameter(Mandatory=$true)]
     [string]$BaseUsername,
@@ -35,7 +35,9 @@ $CMServerName = "$($DomainNetBIOSName)CM01"
 Add-DnsServerPrimaryZone -NetworkID $ReverseZoneNetworkId -ReplicationScope Domain
 
 # Add alternative UPN suffix
-Set-ADForest -Identity ((Get-ADForest).Name) -UPNSuffixes @{add="$AlternativeUpnSuffix"}
+if ($AlternativeUpnSuffix -ne $null) {
+    Set-ADForest -Identity ((Get-ADForest).Name) -UPNSuffixes @{add="$AlternativeUpnSuffix"}
+}
 
 # Create root OUs
 New-ADOrganizationalUnit -Name $DomainNetBIOSName -Path $DomainDistinguishedName -Description "$DomainNetBIOSName Root OU"
@@ -110,9 +112,14 @@ Add-ADGroupMember -Identity "LocalAdmin_Workstations" -Members $RBAC_Workstation
 # Create user accounts
 $T0 = New-ADUser -Name "$($BaseUsername)-da" -SamAccountName "$($BaseUsername)-da" -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname (DA)" -Path "OU=T0,$DomainDistinguishedName"             -UserPrincipalName "$($BaseUsername)-da@$($DomainName)"           -AccountPassword $T0Password -PasswordNeverExpires $true -Enabled $true  -PassThru
 $T1 = New-ADUser -Name "$($BaseUsername)-sa" -SamAccountName "$($BaseUsername)-sa" -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname (SA)" -Path "OU=Administrators,$RootOUDistinguishedName" -UserPrincipalName "$($BaseUsername)-sa@$($DomainName)"           -AccountPassword $T1Password -PasswordNeverExpires $true -Enabled $true  -PassThru
-$T2 = New-ADUser -Name "$($BaseUsername)-wa" -SamAccountName "$($BaseUsername)-wa" -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname (WA)" -Path "OU=Users,$RootOUDistinguishedName"          -UserPrincipalName "$($BaseUsername)-wa@$($AlternativeUpnSuffix)" -AccountPassword $T2Password -PasswordNeverExpires $true -Enabled $true  -PassThru
-
-New-ADUser -Name $BaseUsername -SamAccountName $BaseUsername -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname" -Path "OU=Users,$RootOUDistinguishedName" -UserPrincipalName "$($BaseUsername)@$($AlternativeUpnSuffix)" -AccountPassword $T3Password -PasswordNeverExpires $true -Enabled $true
+if ($AlternativeUpnSuffix -ne $null) {
+    $T2 = New-ADUser -Name "$($BaseUsername)-wa" -SamAccountName "$($BaseUsername)-wa" -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname (WA)" -Path "OU=Users,$RootOUDistinguishedName"          -UserPrincipalName "$($BaseUsername)-wa@$($AlternativeUpnSuffix)" -AccountPassword $T2Password -PasswordNeverExpires $true -Enabled $true  -PassThru
+    New-ADUser -Name $BaseUsername -SamAccountName $BaseUsername -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname" -Path "OU=Users,$RootOUDistinguishedName" -UserPrincipalName "$($BaseUsername)@$($AlternativeUpnSuffix)" -AccountPassword $T3Password -PasswordNeverExpires $true -Enabled $true
+}
+else {
+    $T2 = New-ADUser -Name "$($BaseUsername)-wa" -SamAccountName "$($BaseUsername)-wa" -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname (WA)" -Path "OU=Users,$RootOUDistinguishedName"          -UserPrincipalName "$($BaseUsername)-wa@$($DomainName)" -AccountPassword $T2Password -PasswordNeverExpires $true -Enabled $true  -PassThru
+    New-ADUser -Name $BaseUsername -SamAccountName $BaseUsername -GivenName $GivenName -Initials $Initial -Surname $Surname -DisplayName "$GivenName $Initial $Surname" -Path "OU=Users,$RootOUDistinguishedName" -UserPrincipalName "$($BaseUsername)@$($DomainName)" -AccountPassword $T3Password -PasswordNeverExpires $true -Enabled $true
+}
 
 # Add users to necessary groups
 Add-ADGroupMember -Identity "Domain Admins"             -Members $T0
