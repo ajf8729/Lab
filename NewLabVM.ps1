@@ -13,6 +13,8 @@ Param(
     [Parameter(Mandatory = $true)]
     [string]$VirtualSwitchName,
     [Parameter(Mandatory = $true)]
+    [int]$DiskCount,
+    [Parameter(Mandatory = $true)]
     [string]$VHDPath,
     [Parameter(Mandatory = $true)]
     [int]$VHDSizeGB,
@@ -47,3 +49,14 @@ $HgsKeyProtector = New-HgsKeyProtector -Owner $HgsGuardian -AllowUntrustedRoot
 Set-VMKeyProtector -VMName $VMName -KeyProtector $HgsKeyProtector.RawData
 Enable-VMTPM -VMName $VMName
 Set-VMSecurity -VMName $VMName -EncryptStateAndVmMigrationTraffic $true
+
+# Add additional disks if specified
+if ($DiskCount -gt 1) {
+    Add-VMScsiController -VMName $VMName
+    for ($i = 2; $i -le $DiskCount; $i++) {
+        $DiskNumber = $i.ToString('00')
+        New-VHD -Path "$VHDPath\$VMName-$DiskNumber.vhdx" -SizeBytes ($VHDSizeGB * 1073741824)
+        Add-VMHardDiskDrive -VMName $VMName -ControllerType SCSI -ControllerNumber 1 -ControllerLocation ($i - 2)
+        Set-VMHardDiskDrive -VMName $VMName -ControllerType SCSI -ControllerNumber 1 -ControllerLocation ($i - 2) -Path "$VHDPath\$VMName-$DiskNumber.vhdx"
+    }
+}
