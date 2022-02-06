@@ -15,7 +15,7 @@ Param(
     [Parameter(Mandatory = $true)]
     [string]$DefaultGateway,
     [Parameter(Mandatory = $true)]
-    [string]$DNSServer,
+    [string[]]$DNSServer,
     [Parameter(Mandatory = $true)]
     [string]$TimeZoneID
 )
