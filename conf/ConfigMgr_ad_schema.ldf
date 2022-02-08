@@ -1,0 +1,690 @@
+# ----------------------------------------------------------------------
+# SMS Schema Extensions LDIF file for Microsoft Active Directory
+#
+# THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF 
+# ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
+# THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A 
+# PARTICULAR PURPOSE. 
+
+# Copyright (C) 2005 Microsoft Corporation.  All Rights Reserved. 
+# 
+# This file extends the Active Directory Schema for SMS V4.
+#
+# This LDIF file performs a schema extensions compatible with SMS 2003 and
+# SMS V4.  The extensions will be added for SMS 2003 and then updated for
+# SMS V4, so the LDIF can be used for both new installations of SMS V4 as
+# well as upgrades to existing SMS 2003 schemas.  
+#
+# Change Log:
+#
+# Version	Date		Reason
+# ------------- --------------- -----------------------------
+# Version 1.0 	9/7/2005	Initial File Creation
+# Version 1.1	9/8/2005	Added possSuperiors: container to Classes 
+#					MS-SMS-Site, MS-SMS-Roaming-Boundary-Range
+#
+# ----------------------------------------------------------------------
+#
+#
+# This file must be imported using the LDIFDE utility.  Each distinguished 
+# name (dn) has a trailing "DC=x" clause that MUST be replaced by your 
+# organization's domain specific information before you can import this file.
+# For example, if your domain information was "mydomain.mycompany.com" 
+# then you must replace all occurrences of "DC=x" with 
+# "DC=mydomain,DC=mycompany,DC=com" before importing the file.
+# 
+# Online documentation for this tool is available at the following link:
+# http://msdn.microsoft.com/library/default.asp?url=/library/en-us/wss/wss/sgw_install_ldifde.asp
+#
+# Please refer to the documentation and apply the appropriate command line
+# arguments for importing this file in your environment.
+#
+
+
+# =========================================================================
+#                       SMS Schema Attributes - Additions for SMS V4
+# =========================================================================
+
+
+# ----------------------------------------------------------------------
+# This section adds a new attribute for SMS Capabilities information.  This is a
+# new attribute for SMS V4.  
+#
+# This attribute updates the MS-SMS-Management-Point class.
+# ----------------------------------------------------------------------
+
+dn: CN=mS-SMS-Capabilities,CN=Schema,CN=Configuration,DC=x
+changetype: add
+objectClass: top
+objectClass: attributeSchema
+cn: mS-SMS-Capabilities
+attributeID: 1.2.840.113556.1.6.29.2.1.14
+attributeSyntax: 2.5.5.4
+#schemaIDGUID:: y1C8EEwlBkWgB+T2V+XESA==
+isSingleValued: TRUE
+oMSyntax: 20
+searchFlags: 0
+isMemberOfPartialAttributeSet: TRUE
+
+
+dn:
+changetype: modify
+replace: schemaupdatenow
+schemaupdatenow: 1
+-
+
+
+# ----------------------------------------------------------------------
+# This section adds a new attribute for SMS Version information.  This is a
+# new attribute for SMS V4.
+#
+# This attribute updates the MS-SMS-Management-Point class.
+# ----------------------------------------------------------------------
+
+dn: CN=mS-SMS-Version,CN=Schema,CN=Configuration,DC=x
+changetype: add
+objectClass: top
+objectClass: attributeSchema
+cn: mS-SMS-Version
+attributeID: 1.2.840.113556.1.6.29.2.1.15
+attributeSyntax: 2.5.5.9
+#schemaIDGUID:: lRnUp3IvIkuzHZB7BUuaoQ==
+isSingleValued: TRUE
+oMSyntax: 10
+searchFlags: 0
+isMemberOfPartialAttributeSet: TRUE
+
+
+dn:
+changetype: modify
+replace: schemaupdatenow
+schemaupdatenow: 1
+-
+
+# ----------------------------------------------------------------------
+# This section adds a new attribute for SMS Source Forest information.  
+# This is a new attribute for SMS V4.
+#
+# This attribute updates the MS-SMS-Management-Point, MS-SMS-Server-Locator-Point,
+# MS-SMS-Roaming-Boundary-Range and MS-SMS-Site classes.
+# ----------------------------------------------------------------------
+
+dn: CN=mS-SMS-Source-Forest,CN=Schema,CN=Configuration,DC=x
+changetype: add
+objectClass: top
+objectClass: attributeSchema
+cn: mS-SMS-Source-Forest
+attributeID: 1.2.840.113556.1.6.29.2.1.12
+attributeSyntax: 2.5.5.4
+#schemaIDGUID:: f4pUsgbiSUmWPhxjXzKHhQ==
+isSingleValued: TRUE
+oMSyntax: 20
+searchFlags: 0
+isMemberOfPartialAttributeSet: TRUE
+
+
+dn:
+changetype: modify
+replace: schemaupdatenow
+schemaupdatenow: 1
+-
+
+
+# ----------------------------------------------------------------------
+# This section adds a new attribute for SMS Health State information.  
+# This is a new attribute for SMS V4.
+#
+# This attribute updates the MS-SMS-Site class.
+# ----------------------------------------------------------------------
+
+dn: CN=mS-SMS-Health-State,CN=Schema,CN=Configuration,DC=x
+changetype: add
+objectClass: top
+objectClass: attributeSchema
+cn: mS-SMS-Health-State
+attributeID: 1.2.840.113556.1.6.29.2.1.11
+attributeSyntax: 2.5.5.4
+#schemaIDGUID:: HdETwfFOuUqqFoIlSu9fmw==
+isSingleValued: TRUE
+oMSyntax: 20
+searchFlags: 0
+isMemberOfPartialAttributeSet: TRUE
+
+
+dn:
+changetype: modify
+replace: schemaupdatenow
+schemaupdatenow: 1
+-
+
+# =========================================================================
+#           SMS Schema Attributes - Additions for SMS 2003 or SMS V4
+# =========================================================================
+
+
+# ----------------------------------------------------------------------
+# SMS Assignment Site Code Attribute
+# This section adds the SMS 2003 compatible attribute for SMS Sites
+# This attribute will fail to be added if the AD schema has already been 
+# extended for SMS 2003.
+# ----------------------------------------------------------------------
+
+
+dn: CN=mS-SMS-Assignment-Site-Code,CN=Schema,CN=Configuration,DC=x
+changetype: add
+objectClass: top
+objectClass: attributeSchema
+cn: mS-SMS-Assignment-Site-Code
+attributeID: 1.2.840.113556.1.6.29.2.1.9
+attributeSyntax: 2.5.5.4
+#schemaIDGUID:: /pIWC1insk6TC0NQZJmJnw==
+isSingleValued: TRUE
+oMSyntax: 20
+searchFlags: 1
+isMemberOfPartialAttributeSet: TRUE
+
+
+dn:
+changetype: modify
+replace: schemaupdatenow
+schemaupdatenow: 1
+-
+
+# ----------------------------------------------------------------------
+# SMS Default MP Attribute
+#
+# This section adds the SMS 2003 compatible attribute for SMS Sites
+# This attribute will fail to be added if the AD schema has already been 
+# extended for SMS 2003.  This attribute will be added if the schema has
+# not yet been extended for SMS 2003 or SMS V4.
+# ----------------------------------------------------------------------
+
+
+dn: CN=MS-SMS-Default-MP,CN=Schema,CN=Configuration,DC=x
+changetype: add
+objectClass: top
+objectClass: attributeSchema
+cn: MS-SMS-Default-MP
+attributeID: 1.2.840.113556.1.6.29.2.1.4
+attributeSyntax: 2.5.5.8
+#schemaIDGUID:: oSVZaYi2R02anfiyensSgw==
+isSingleValued: TRUE
+oMSyntax: 1
+searchFlags: 1
+isMemberOfPartialAttributeSet: TRUE
+
+
+dn:
+changetype: modify
+replace: schemaupdatenow
+schemaupdatenow: 1
+-
+
+# ----------------------------------------------------------------------
+# SMS MP Address Attribute
+#
+# This section adds the SMS 2003 compatible attribute for SMS Sites
+# This attribute will fail to be added if the AD schema has already been 
+# extended for SMS 2003.  This attribute will be added if the schema has
+# not yet been extended for SMS 2003 or SMS V4.
+# ----------------------------------------------------------------------
+
+
+
+dn: CN=MS-SMS-MP-Address,CN=Schema,CN=Configuration,DC=x
+changetype: add
+objectClass: top
+objectClass: attributeSchema
+cn: MS-SMS-MP-Address
+attributeID: 1.2.840.113556.1.6.29.2.1.6
+attributeSyntax: 2.5.5.4
+#schemaIDGUID:: bMSOc27NMkKmaZvgr3t6Qw==
+isSingleValued: TRUE
+oMSyntax: 20
+searchFlags: 1
+isMemberOfPartialAttributeSet: TRUE
+
+
+dn:
+changetype: modify
+replace: schemaupdatenow
+schemaupdatenow: 1
+-
+
+# ----------------------------------------------------------------------
+# SMS MP Name Attribute
+#
+# This section adds the SMS 2003 compatible attribute for SMS Sites
+# This attribute will fail to be added if the AD schema has already been 
+# extended for SMS 2003.  This attribute will be added if the schema has
+# not yet been extended for SMS 2003 or SMS V4.
+# ----------------------------------------------------------------------
+
+dn: CN=MS-SMS-MP-Name,CN=Schema,CN=Configuration,DC=x
+changetype: add
+objectClass: top
+objectClass: attributeSchema
+cn: MS-SMS-MP-Name
+attributeID: 1.2.840.113556.1.6.29.2.1.5
+attributeSyntax: 2.5.5.4
+#schemaIDGUID:: n6Ccx7FpokOpsARavAfdOg==
+isSingleValued: TRUE
+oMSyntax: 20
+searchFlags: 1
+isMemberOfPartialAttributeSet: TRUE
+
+
+dn:
+changetype: modify
+replace: schemaupdatenow
+schemaupdatenow: 1
+-
+
+# ----------------------------------------------------------------------
+# SMS IP Address Range - HIGH Attribute
+#
+# This section adds the SMS 2003 compatible attribute for SMS Sites
+# This attribute will fail to be added if the AD schema has already been 
+# extended for SMS 2003.  This attribute will be added if the schema has
+# not yet been extended for SMS 2003 or SMS V4.
+# ----------------------------------------------------------------------
+
+dn: CN=MS-SMS-Ranged-IP-High,CN=Schema,CN=Configuration,DC=x
+changetype: add
+objectClass: top
+objectClass: attributeSchema
+cn: MS-SMS-Ranged-IP-High
+attributeID: 1.2.840.113556.1.6.29.2.1.8
+attributeSyntax: 2.5.5.9
+#schemaIDGUID:: bpI27lXQb0yh01im/W5RVg==
+isSingleValued: TRUE
+oMSyntax: 10
+searchFlags: 1
+isMemberOfPartialAttributeSet: TRUE
+
+
+dn:
+changetype: modify
+replace: schemaupdatenow
+schemaupdatenow: 1
+-
+
+
+# ----------------------------------------------------------------------
+# SMS IP Address Range - LOW Attribute
+#
+# This section adds the SMS 2003 compatible attribute for SMS Sites
+# This attribute will fail to be added if the AD schema has already been 
+# extended for SMS 2003.  This attribute will be added if the schema has
+# not yet been extended for SMS 2003 or SMS V4.
+# ----------------------------------------------------------------------
+
+dn: CN=MS-SMS-Ranged-IP-Low,CN=Schema,CN=Configuration,DC=x
+changetype: add
+objectClass: top
+objectClass: attributeSchema
+cn: MS-SMS-Ranged-IP-Low
+attributeID: 1.2.840.113556.1.6.29.2.1.7
+attributeSyntax: 2.5.5.9
+#schemaIDGUID:: owoDVT+q2EG4jC/Abz64Xg==
+isSingleValued: TRUE
+oMSyntax: 10
+searchFlags: 1
+isMemberOfPartialAttributeSet: TRUE
+
+
+dn:
+changetype: modify
+replace: schemaupdatenow
+schemaupdatenow: 1
+-
+
+
+# ----------------------------------------------------------------------
+# SMS Roaming Boundaries Attribute
+#
+# This section adds the SMS 2003 compatible attribute for SMS Sites
+# This attribute will fail to be added if the AD schema has already been 
+# extended for SMS 2003.  This attribute will be added if the schema has
+# not yet been extended for SMS 2003 or SMS V4.
+# ----------------------------------------------------------------------
+
+dn: CN=MS-SMS-Roaming-Boundaries,CN=Schema,CN=Configuration,DC=x
+changetype: add
+objectClass: top
+objectClass: attributeSchema
+cn: MS-SMS-Roaming-Boundaries
+attributeID: 1.2.840.113556.1.6.29.2.1.3
+attributeSyntax: 2.5.5.4
+#schemaIDGUID:: jvC7kQVIb0a6pG1qnTIxzA==
+isSingleValued: FALSE
+oMSyntax: 20
+searchFlags: 1
+isMemberOfPartialAttributeSet: TRUE
+
+
+dn:
+changetype: modify
+replace: schemaupdatenow
+schemaupdatenow: 1
+-
+
+
+# ----------------------------------------------------------------------
+# SMS Site Boundaries Attribute
+#
+# This section adds the SMS 2003 compatible attribute for SMS Sites
+# This attribute will fail to be added if the AD schema has already been 
+# extended for SMS 2003.  This attribute will be added if the schema has
+# not yet been extended for SMS 2003 or SMS V4.
+# ----------------------------------------------------------------------
+
+dn: CN=MS-SMS-Site-Boundaries,CN=Schema,CN=Configuration,DC=x
+changetype: add
+objectClass: top
+objectClass: attributeSchema
+cn: MS-SMS-Site-Boundaries
+attributeID: 1.2.840.113556.1.6.29.2.1.2
+attributeSyntax: 2.5.5.4
+#schemaIDGUID:: tAggkdSk5kWRGIb5G0u9Yw==
+isSingleValued: FALSE
+oMSyntax: 20
+searchFlags: 1
+isMemberOfPartialAttributeSet: TRUE
+
+
+dn:
+changetype: modify
+replace: schemaupdatenow
+schemaupdatenow: 1
+-
+
+
+# ----------------------------------------------------------------------
+# SMS Site Code Attribute
+#
+# This section adds the SMS 2003 compatible attribute for SMS Sites
+# This attribute will fail to be added if the AD schema has already been 
+# extended for SMS 2003.  This attribute will be added if the schema has
+# not yet been extended for SMS 2003 or SMS V4.
+# ----------------------------------------------------------------------
+
+dn: CN=MS-SMS-Site-Code,CN=Schema,CN=Configuration,DC=x
+changetype: add
+objectClass: top
+objectClass: attributeSchema
+cn: MS-SMS-Site-Code
+attributeID: 1.2.840.113556.1.6.29.2.1.1
+attributeSyntax: 2.5.5.4
+#schemaIDGUID:: oaS8nkwH1EKOUPHJ1jY6Iw==
+isSingleValued: TRUE
+oMSyntax: 20
+searchFlags: 1
+isMemberOfPartialAttributeSet: TRUE
+
+
+dn:
+changetype: modify
+replace: schemaupdatenow
+schemaupdatenow: 1
+-
+
+# ----------------------------------------------------------------------
+# SMS Device Management Point Attribute
+#
+# This section adds the SMS 2003 compatible attribute for SMS Sites
+# This attribute will fail to be added if the AD schema has already been 
+# extended for SMS 2003.  This attribute will be added if the schema has
+# not yet been extended for SMS 2003 or SMS V4.
+# ----------------------------------------------------------------------
+
+dn: CN=mS-SMS-Device-Management-Point,CN=Schema,CN=Configuration,DC=x
+changetype: add
+objectClass: top
+objectClass: attributeSchema
+cn: mS-SMS-Device-Management-Point
+attributeID: 1.2.840.113556.1.6.29.2.1.10
+attributeSyntax: 2.5.5.8
+#schemaIDGUID:: 0Nvncurz70a9O4WcE07E0A==
+isSingleValued: TRUE
+oMSyntax: 1
+searchFlags: 1
+isMemberOfPartialAttributeSet: TRUE
+
+
+dn:
+changetype: modify
+replace: schemaupdatenow
+schemaupdatenow: 1
+-
+
+# =========================================================================
+#                       SMS Schema Classes - Additions
+# =========================================================================
+
+
+
+
+# =========================================================================
+# SMS Management Point Class
+# This section adds the SMS 2003 compatible class for SMS Management Points
+# This class will fail to be added if the AD schema has already been 
+# extended for SMS 2003.
+# ----------------------------------------------------------------------
+
+dn: CN=MS-SMS-Management-Point,CN=Schema,CN=Configuration,DC=x
+changetype: add
+objectClass: top
+objectClass: classSchema
+cn: MS-SMS-Management-Point
+#schemaIDGUID:: J2CTp5U02E+D9y/CDvZypA==
+subClassOf: serviceConnectionPoint
+governsID: 1.2.840.113556.1.6.29.2.2.1
+mayContain: cn
+mayContain: mSSMSDeviceManagementPoint
+mayContain: mSSMSMPAddress
+mayContain: mSSMSMPName
+mayContain: mSSMSDefaultMP
+mayContain: mSSMSSiteCode
+objectClassCategory: 1
+defaultSecurityDescriptor: 
+ D:(A;;RPWPCRCCDCLCLORCWOWDSDDTSW;;;DA)(A;;RPWPCRCCDCLCLORCWOWDSDDTSW;;;SY)(A;;
+ RPLCLORC;;;AU)S:(AU;SAFA;WDWOSDDTWPCRCCDCSW;;;WD)
+defaultHidingValue: TRUE
+
+
+dn:
+changetype: modify
+replace: schemaupdatenow
+schemaupdatenow: 1
+-
+
+
+# =========================================================================
+# SMS Server Locator Point Class
+# This section adds the SMS 2003 compatible class for SMS Server Locator Points
+# This class will fail to be added if the AD schema has already been 
+# extended for SMS 2003.
+# ----------------------------------------------------------------------
+
+dn: CN=MS-SMS-Server-Locator-Point,CN=Schema,CN=Configuration,DC=x
+changetype: add
+objectClass: top
+objectClass: classSchema
+cn: MS-SMS-Server-Locator-Point
+#schemaIDGUID:: Hu+QazZYekyNEWejhF18GQ==
+subClassOf: serviceConnectionPoint
+governsID: 1.2.840.113556.1.6.29.2.2.3
+mayContain: mSSMSMPName
+mayContain: cn
+mayContain: mSSMSSiteCode
+objectClassCategory: 1
+defaultSecurityDescriptor: 
+ D:(A;;RPWPCRCCDCLCLORCWOWDSDDTSW;;;DA)(A;;RPWPCRCCDCLCLORCWOWDSDDTSW;;;SY)(A;;
+ RPLCLORC;;;AU)S:(AU;SAFA;WDWOSDDTWPCRCCDCSW;;;WD)
+defaultHidingValue: TRUE
+
+
+dn:
+changetype: modify
+replace: schemaupdatenow
+schemaupdatenow: 1
+-
+
+# ----------------------------------------------------------------------
+# SMS Roaming Boundary Range Class
+# This section adds the SMS 2003 compatible class for SMS Roaming Boundaries
+# This class will fail to be added if the AD schema has already been 
+# extended for SMS 2003.
+# ----------------------------------------------------------------------
+
+dn: CN=MS-SMS-Roaming-Boundary-Range,CN=Schema,CN=Configuration,DC=x
+changetype: add
+objectClass: top
+objectClass: classSchema
+cn: MS-SMS-Roaming-Boundary-Range
+#schemaIDGUID:: g9ksAfsknUGf2nidWc7gdQ==
+subClassOf: top
+governsID: 1.2.840.113556.1.6.29.2.2.4
+possSuperiors: container
+mayContain: cn
+mayContain: mSSMSRangedIPHigh
+mayContain: mSSMSRangedIPLow
+mayContain: mSSMSAssignmentSiteCode
+mayContain: mSSMSSiteCode
+objectClassCategory: 1
+defaultSecurityDescriptor: 
+ D:(A;;RPWPCRCCDCLCLORCWOWDSDDTSW;;;DA)(A;;RPWPCRCCDCLCLORCWOWDSDDTSW;;;SY)(A;;
+ RPLCLORC;;;AU)S:(AU;SAFA;WDWOSDDTWPCRCCDCSW;;;WD)
+defaultHidingValue: TRUE
+
+
+dn:
+changetype: modify
+replace: schemaupdatenow
+schemaupdatenow: 1
+-
+
+# ----------------------------------------------------------------------
+# SMS Site Class
+# This section adds the SMS 2003 compatible class for SMS Sites
+# This class will fail to be added if the AD schema has already been 
+# extended for SMS 2003.
+# ----------------------------------------------------------------------
+
+dn: CN=MS-SMS-Site,CN=Schema,CN=Configuration,DC=x
+changetype: add
+objectClass: top
+objectClass: classSchema
+cn: MS-SMS-Site
+#schemaIDGUID:: 6Xk4L4UXJUe4yObtsJOKpQ==
+subClassOf: top
+governsID: 1.2.840.113556.1.6.29.2.2.2
+possSuperiors: container
+mayContain: serviceBindingInformation
+mayContain: cn
+mayContain: mSSMSRoamingBoundaries
+mayContain: mSSMSSiteBoundaries
+mayContain: mSSMSAssignmentSiteCode
+mayContain: mSSMSSiteCode
+objectClassCategory: 1
+defaultSecurityDescriptor: 
+ D:(A;;RPWPCRCCDCLCLORCWOWDSDDTSW;;;DA)(A;;RPWPCRCCDCLCLORCWOWDSDDTSW;;;SY)(A;;
+ RPLCLORC;;;AU)S:(AU;SAFA;WDWOSDDTWPCRCCDCSW;;;WD)
+defaultHidingValue: TRUE
+
+
+dn:
+changetype: modify
+replace: schemaupdatenow
+schemaupdatenow: 1
+-
+
+# =========================================================================
+#                       SMS Schema Classes - Modifications
+# =========================================================================
+
+
+# ----------------------------------------------------------------------
+# This section updates an existing  MS-SMS-Roaming-Boundary-Range class
+# by adding one new attribute to the class.  This section
+# should always succeed whether the Schema is already extended for SMS 2003
+# or if it is updated using this file.
+# ----------------------------------------------------------------------
+
+dn: CN=MS-SMS-Roaming-Boundary-Range,CN=Schema,CN=Configuration,DC=x
+changetype: modify
+add: mayContain
+mayContain: mSSMSSourceForest
+-
+
+dn:
+changetype: modify
+replace: schemaupdatenow
+schemaupdatenow: 1
+-
+
+# ----------------------------------------------------------------------
+# This section updates an existing MS-SMS-Server-Locator-Point class
+# by adding two new attributes to the class.  This section
+# should always succeed whether the Schema is already extended for SMS 2003
+# or if it is updated using this file.
+# ----------------------------------------------------------------------
+
+dn: CN=MS-SMS-Server-Locator-Point,CN=Schema,CN=Configuration,DC=x
+changetype: modify
+add: mayContain
+mayContain: mSSMSSourceForest
+mayContain: dNSHostName
+-
+
+dn:
+changetype: modify
+replace: schemaupdatenow
+schemaupdatenow: 1
+-
+
+# ----------------------------------------------------------------------
+# This section updates an existing MS-SMS-Management-Point class
+# by adding four new attributes to the class.  This section
+# should always succeed whether the Schema is already extended for SMS 2003
+# or if it is updated using this file.
+# ----------------------------------------------------------------------
+
+dn: CN=MS-SMS-Management-Point,CN=Schema,CN=Configuration,DC=x
+changetype: modify
+add: mayContain
+mayContain: mSSMSCapabilities
+mayContain: mSSMSVersion
+mayContain: mSSMSSourceForest
+mayContain: dNSHostName
+-
+
+dn:
+changetype: modify
+replace: schemaupdatenow
+schemaupdatenow: 1
+-
+
+
+# ----------------------------------------------------------------------
+# This section updates an existing MS-SMS-Site class
+# by adding two new attributes to the class.  This section
+# should always succeed whether the Schema is already extended for SMS 2003
+# or if it is updated using this file.
+# ----------------------------------------------------------------------
+
+dn: CN=MS-SMS-Site,CN=Schema,CN=Configuration,DC=x
+changetype: modify
+add: mayContain
+mayContain: mSSMSSourceForest
+mayContain: mSSMSHealthState
+-
+
+
+dn:
+changetype: modify
+replace: schemaupdatenow
+schemaupdatenow: 1
+-
+
