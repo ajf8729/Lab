@@ -47,6 +47,9 @@ Invoke-WebRequest -UseBasicParsing -Uri "$($BaseURL)/Windows%20Server%202022%20S
 New-GPLink -Name 'MSFT Windows Server 2022 - Domain Controller' -Target "OU=Domain Controllers,$DomainDistinguishedName"
 New-GPLink -Name 'MSFT Windows Server 2022 - Domain Controller Virtualization Based Security' -Target "OU=Domain Controllers,$DomainDistinguishedName"
 New-GPLink -Name 'MSFT Windows Server 2022 - Defender Antivirus' -Target "OU=Domain Controllers,$DomainDistinguishedName"
+# Move "Default Domain Controllers Policy" to last
+$DCLinkCount = ((Get-GPInheritance -Target "OU=Domain Controllers,$DomainDistinguishedName").GpoLinks).Count
+Set-GPLink -Name 'Default Domain Controllers Policy' -Target "OU=Domain Controllers,$DomainDistinguishedName" -Order $DCLinkCount
 
 # T0 OU
 New-GPLink -Name 'MSFT Windows 11 - User' -Target "OU=T0,$DomainDistinguishedName"
