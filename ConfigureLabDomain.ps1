@@ -159,7 +159,7 @@ Add-ADGroupMember -Identity 'CM_Admins' -Members $CM_Servers
 Add-ADGroupMember -Identity 'CM_Admins' -Members $RBAC_InfrastructureAdmins
 Add-ADGroupMember -Identity 'CM_SQL_Admins' -Members $CM_Admins
 
-New-ADServiceAccount -Name 'svc_CM_SQL' -SamAccountName 'svc_CM_SQL' -DNSHostName "$($CMServerName).$($DomainName)" -KerberosEncryptionType AES128, AES256 -Path "OU=CM,OU=Servers,$RootOUDistinguishedName" -PrincipalsAllowedToRetrieveManagedPassword (Get-ADGroup -Identity 'CM_Servers')
+New-ADServiceAccount -Name 'svc_CM_SQL' -SamAccountName 'svc_CM_SQL' -DNSHostName "svc-cm-sql.$($DomainName)" -KerberosEncryptionType AES128, AES256 -Path "OU=CM,OU=Servers,$RootOUDistinguishedName" -PrincipalsAllowedToRetrieveManagedPassword (Get-ADGroup -Identity 'CM_Servers')
 
 New-ADObject -Name 'System Management' -Type Container -Path "CN=System,$($DomainDistinguishedName)"
 
