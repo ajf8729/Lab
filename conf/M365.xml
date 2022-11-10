@@ -1,0 +1,21 @@
+<Configuration ID="adbac891-577c-4ef4-af68-704138962d90">
+    <Add OfficeClientEdition="64" Channel="MonthlyEnterprise" MigrateArch="TRUE">
+        <Product ID="O365ProPlusRetail">
+            <Language ID="en-us" />
+            <Language ID="MatchPreviousMSI" />
+            <ExcludeApp ID="Groove" />
+            <ExcludeApp ID="Lync" />
+        </Product>
+    </Add>
+    <Property Name="SharedComputerLicensing" Value="0" />
+    <Property Name="FORCEAPPSHUTDOWN" Value="TRUE" />
+    <Property Name="DeviceBasedLicensing" Value="0" />
+    <Property Name="SCLCacheOverride" Value="0" />
+    <Property Name="TenantId" Value="f94ec84f-bd95-485f-8e75-df606bec2e3c" />
+    <Updates Enabled="TRUE" />
+    <RemoveMSI />
+    <AppSettings>
+        <Setup Name="Company" Value="AJF.ONE CORP" />
+    </AppSettings>
+    <Display Level="None" AcceptEULA="TRUE" />
+</Configuration>
